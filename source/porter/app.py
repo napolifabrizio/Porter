@@ -124,7 +124,7 @@ else:
                 if product.description:
                     lines.append(product.description[:160])
                 lines.append(f"🔗 {product.url}")
-                lines.append(f"initial: R$ {product.initial_price:.2f}")
+                lines.append(f"Initial: R$ {product.initial_price:.2f}")
                 st.markdown(
                     "<br>".join(f"<span style='color:#cccccc; font-size:0.85em'>{l}</span>" for l in lines),
                     unsafe_allow_html=True,
