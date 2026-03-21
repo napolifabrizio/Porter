@@ -43,9 +43,19 @@ products = list_products()
 if not products:
     st.info("No products tracked yet. Paste a URL above to get started.")
 else:
-    col_check, _ = st.columns([1, 4])
+    # Compute selection count from checkbox widget state (before rendering buttons)
+    selected_ids = {
+        p.id
+        for p in products
+        if st.session_state.get(f"sel_{p.id}", False)
+    }
+    n_selected = len(selected_ids)
+
+    col_check, col_check_sel, _ = st.columns([1, 1, 3])
     with col_check:
         check_clicked = st.button("Check All Prices", type="primary")
+    with col_check_sel:
+        check_sel_clicked = st.button(f"Check Selected ({n_selected})")
 
     check_results: dict[int, object] = {}
 
@@ -55,12 +65,23 @@ else:
             check_results = {r.product.id: r for r in results}
         # Reload products to show updated prices
         products = list_products()
+    elif check_sel_clicked:
+        if n_selected == 0:
+            st.warning("Select at least one product.")
+        else:
+            selected_products = [p for p in products if p.id in selected_ids]
+            with st.spinner("Checking selected prices..."):
+                results = check_all_prices(selected_products)
+                check_results = {r.product.id: r for r in results}
+            products = list_products()
 
     st.subheader("Your products")
 
     for product in products:
         with st.container(border=True):
-            col_info, col_status = st.columns([3, 1])
+            col_sel, col_info, col_status = st.columns([0.3, 3, 1])
+            with col_sel:
+                st.checkbox("", key=f"sel_{product.id}", label_visibility="collapsed")
 
             with col_info:
                 st.markdown(f"**{product.name}**")

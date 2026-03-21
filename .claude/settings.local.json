@@ -3,7 +3,10 @@
     "allow": [
       "Bash(openspec status:*)",
       "Bash(openspec instructions:*)",
-      "Bash(streamlit run:*)"
+      "Bash(streamlit run:*)",
+      "Bash(poetry run:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(openspec new:*)"
     ]
   }
 }
