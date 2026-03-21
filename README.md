@@ -20,6 +20,7 @@ A personal price watchlist app. Paste a product URL, Porter scrapes the price, s
 
 | Layer | Technology |
 |---|---|
+| AI Tool | Claude Code |
 | Language | Python 3.11.9 |
 | Package manager | Poetry |
 | UI | Streamlit |
