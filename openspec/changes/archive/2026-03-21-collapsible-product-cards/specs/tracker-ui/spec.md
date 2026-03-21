@@ -1,30 +1,4 @@
-## ADDED Requirements
-
-### Requirement: User can add a product by pasting a URL
-The system SHALL provide a text input and an "Add Product" button. When clicked, the system scrapes the URL and saves the product to the database.
-
-#### Scenario: Valid URL added successfully
-- **WHEN** the user pastes a valid product URL and clicks "Add Product"
-- **THEN** the system scrapes the page, saves the product, and displays it in the product list with a success message
-
-#### Scenario: Duplicate URL rejected in UI
-- **WHEN** the user attempts to add a URL already in the database
-- **THEN** the system displays a warning message and does not add a duplicate
-
-#### Scenario: Scrape failure shown in UI
-- **WHEN** the scraper fails to extract product data from the URL
-- **THEN** the system displays an error message describing the failure; no product is saved
-
-### Requirement: User can trigger a price check for all products
-The system SHALL provide a "Check All Prices" button that re-scrapes every tracked product and refreshes the displayed prices.
-
-#### Scenario: Check updates the product list
-- **WHEN** the user clicks "Check All Prices"
-- **THEN** prices in the list are updated to reflect the latest scraped values
-
-#### Scenario: No products tracked shows empty state
-- **WHEN** the user clicks "Check All Prices" and no products are tracked
-- **THEN** the system shows an informational message that no products are being tracked
+## MODIFIED Requirements
 
 ### Requirement: Product list shows price status with visual indicators
 The system SHALL display each tracked product as a collapsible card. The collapsed (default) state SHALL show only the product name and current price. The expanded state SHALL additionally show the product description (if present), the product URL, and the initial price. A toggle control in the card header SHALL switch between collapsed and expanded states. The price/status visual indicator (↓ green with percentage, = neutral, or red error) SHALL be visible in both states.
@@ -52,13 +26,6 @@ The system SHALL display each tracked product as a collapsible card. The collaps
 #### Scenario: Card collapses on toggle click when open
 - **WHEN** the user clicks the toggle control on an expanded card
 - **THEN** the card collapses back to showing only name and current price
-
-### Requirement: Application is launchable via Streamlit
-The system SHALL be runnable with `streamlit run source/porter/app.py` from the project root.
-
-#### Scenario: App starts without errors
-- **WHEN** the command `streamlit run source/porter/app.py` is executed
-- **THEN** the Streamlit app opens in the browser without import errors or crashes
 
 ### Requirement: User can select individual products and check only their prices
 The system SHALL display a checkbox on each product card that is visible in both collapsed and expanded states, and a "Check Selected (N)" button that, when clicked, re-scrapes and updates only the checked products.

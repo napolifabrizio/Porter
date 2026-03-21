@@ -78,16 +78,21 @@ else:
     st.subheader("Your products")
 
     for product in products:
+        exp_key = f"expanded_{product.id}"
+        if exp_key not in st.session_state:
+            st.session_state[exp_key] = False
+
         with st.container(border=True):
-            col_sel, col_info, col_status = st.columns([0.3, 3, 1])
+            col_sel, col_toggle, col_status = st.columns([0.3, 3, 1.4])
+
             with col_sel:
                 st.checkbox("", key=f"sel_{product.id}", label_visibility="collapsed")
 
-            with col_info:
-                st.markdown(f"**{product.name}**")
-                if product.description:
-                    st.caption(product.description[:160])
-                st.caption(product.url)
+            with col_toggle:
+                arrow = "▼" if st.session_state[exp_key] else "▶"
+                if st.button(f"{arrow}  {product.name}", key=f"toggle_{product.id}", use_container_width=True):
+                    st.session_state[exp_key] = not st.session_state[exp_key]
+                    st.rerun()
 
             with col_status:
                 result = check_results.get(product.id)
@@ -98,8 +103,7 @@ else:
                     pct = result.change_pct * 100
                     st.markdown(
                         f"<span style='color:green; font-size:1.3em'>↓ -{pct:.1f}%</span><br>"
-                        f"<b>R&#36; {product.current_price:.2f}</b><br>"
-                        f"<small>was R&#36; {product.initial_price:.2f}</small>",
+                        f"<b>R&#36; {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
                 elif result:
@@ -110,10 +114,21 @@ else:
                     )
                 else:
                     st.markdown(
-                        f"<b>R&#36; {product.current_price:.2f}</b><br>"
-                        f"<small>initial: R&#36; {product.initial_price:.2f}</small>",
+                        f"<b>R&#36; {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
+
+            if st.session_state[exp_key]:
+                st.divider()
+                lines = []
+                if product.description:
+                    lines.append(product.description[:160])
+                lines.append(f"🔗 {product.url}")
+                lines.append(f"initial: R$ {product.initial_price:.2f}")
+                st.markdown(
+                    "<br>".join(f"<span style='color:#cccccc; font-size:0.85em'>{l}</span>" for l in lines),
+                    unsafe_allow_html=True,
+                )
 
 
 # ── API key warning ────────────────────────────────────────────────────────────
