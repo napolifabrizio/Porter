@@ -1,5 +1,6 @@
 from porter.application.checker import CheckResult, PriceChecker
 from porter.infrastructure.database import Database
+from porter.infrastructure.fetcher import HttpFetcher
 from porter.infrastructure.scraper import Scraper
 from porter.models import Product
 
@@ -7,7 +8,7 @@ from porter.models import Product
 class AppService:
     def __init__(self):
         self._db = Database()
-        self._scraper = Scraper()
+        self._scraper = Scraper(fetcher=HttpFetcher())
         self._checker = PriceChecker(self._scraper, self._db)
         self._products = None
         self._db.init_db()

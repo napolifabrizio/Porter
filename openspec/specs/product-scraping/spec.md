@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Scraper extracts name, price, and description from any URL
-The system SHALL attempt to extract product `name`, `price` (as a float), and `description` from a given URL via the `Scraper` class located at `porter.infrastructure.scraper`. The `Scraper` class SHALL satisfy the `ProductScraper` protocol defined in `porter.application.ports`. The two-phase hybrid strategy (CSS selectors first, LLM fallback second) and all behavioral requirements are unchanged.
+The system SHALL attempt to extract product `name`, `price` (as a float), and `description` from a given URL via the `Scraper` class located at `porter.infrastructure.scraper`. The `Scraper` class SHALL satisfy the `ProductScraper` protocol defined in `porter.application.ports`. The `Scraper` SHALL receive an `HtmlFetcher` implementation via constructor injection and delegate HTTP fetching to it. The two-phase hybrid strategy (CSS selectors first, LLM fallback second) and all behavioral requirements are unchanged.
 
 #### Scenario: Successful extraction via CSS selectors
 - **WHEN** the page HTML contains recognizable structured fields (e.g., `[itemprop="price"]`, `h1`, `meta[name="description"]`)
