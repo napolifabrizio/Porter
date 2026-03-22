@@ -1,11 +1,11 @@
 import re
 
-import httpx
 from bs4 import BeautifulSoup
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from porter.application.ports import HtmlFetcher
 from porter.models import ScrapedData
 
 
@@ -16,15 +16,8 @@ class _LLMProduct(BaseModel):
 
 
 class Scraper:
-    _BROWSER_HEADERS = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-    }
+    def __init__(self, fetcher: HtmlFetcher):
+        self._fetcher = fetcher
 
     @staticmethod
     def _normalize_price(raw: str) -> float:
@@ -127,17 +120,7 @@ class Scraper:
 
     def fetch_and_scrape(self, url: str) -> ScrapedData:
         """Fetch URL and extract product data using hybrid strategy."""
-        try:
-            response = httpx.get(url, headers=self._BROWSER_HEADERS, follow_redirects=True, timeout=15)
-            response.raise_for_status()
-        except httpx.TimeoutException:
-            raise RuntimeError(f"Request timed out: {url}")
-        except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"HTTP {e.response.status_code} fetching {url}")
-        except httpx.RequestError as e:
-            raise RuntimeError(f"Network error fetching {url}: {e}")
-
-        html = response.text
+        html = self._fetcher.fetch(url)
 
         result = self._scrape_with_bs4(html)
         if result is not None:
