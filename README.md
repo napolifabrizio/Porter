@@ -43,11 +43,18 @@ Price strings like `R$ 1.299,99`, `$12.99`, and `€1,299.00` are all normalized
 
 ```
 source/porter/
-  app.py        # Streamlit UI entry point
-  scraper.py    # fetch_and_scrape: BS4 first, LLM fallback
-  checker.py    # check_all_prices: re-scrapes, updates DB, returns CheckResult list
-  database.py   # SQLite helpers: init_db, add_product, list_products, update_price
-  models.py     # ScrapedData, Product (Pydantic v2)
+  models.py              # ScrapedData, Product (Pydantic v2) — shared across all layers
+  domain/
+    price_rules.py       # Pure price-drop business rule
+  application/
+    ports.py             # ProductScraper + ProductRepository Protocols
+    checker.py           # PriceChecker orchestrator
+    service.py           # AppService facade
+  infrastructure/
+    database.py          # SQLite implementation
+    scraper.py           # HTTP + BS4 + LLM implementation
+  ui/
+    app.py               # Streamlit entry point
 
 openspec/
   specs/        # Capability specs per feature area
@@ -67,7 +74,7 @@ poetry install
 export OPENAI_API_KEY=sk-...
 
 # 3. Run
-poetry run streamlit run source/porter/app.py
+poetry run streamlit run source/porter/ui/app.py
 ```
 
 The SQLite database (`porter.db`) is created automatically on first run.

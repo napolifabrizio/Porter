@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from porter.database import Database
+from porter.application.ports import ProductRepository, ProductScraper
+from porter.domain.price_rules import evaluate_price_drop
 from porter.models import Product
-from porter.scraper import Scraper
 
 
 @dataclass
@@ -14,11 +14,9 @@ class CheckResult:
 
 
 class PriceChecker:
-    DROP_THRESHOLD = 0.05
-
-    def __init__(self, scraper: Scraper, db: Database):
+    def __init__(self, scraper: ProductScraper, repo: ProductRepository):
         self._scraper = scraper
-        self._db = db
+        self._repo = repo
 
     def check_all_prices(self, products: list[Product]) -> list[CheckResult]:
         results: list[CheckResult] = []
@@ -26,10 +24,9 @@ class PriceChecker:
         for product in products:
             try:
                 scraped = self._scraper.fetch_and_scrape(product.url)
-                self._db.update_price(product.id, scraped.price)
+                self._repo.update_price(product.id, scraped.price)
 
-                change_pct = (product.initial_price - scraped.price) / product.initial_price
-                dropped = change_pct >= self.DROP_THRESHOLD
+                dropped, change_pct = evaluate_price_drop(product.initial_price, scraped.price)
 
                 results.append(CheckResult(
                     product=product,

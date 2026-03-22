@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from porter.service import AppService
+from porter.application.service import AppService
 
 svc = AppService()
 
