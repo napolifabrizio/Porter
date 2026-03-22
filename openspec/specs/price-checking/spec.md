@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Price check re-scrapes all tracked products
-The system SHALL re-scrape the current price for every product in the database when a price check is triggered and update `current_price` and `last_checked` for each.
+The system SHALL re-scrape the current price for every product when a price check is triggered via `PriceChecker(scraper, db).check_all_prices(products)`. `PriceChecker` SHALL receive a `Scraper` and `Database` instance via its constructor. All behavioral requirements (update, error handling, results) are unchanged.
 
 #### Scenario: All products updated on check
 - **WHEN** the user triggers a price check and all products scrape successfully

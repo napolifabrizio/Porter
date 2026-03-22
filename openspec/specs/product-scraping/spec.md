@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Scraper extracts name, price, and description from any URL
-The system SHALL attempt to extract product `name`, `price` (as a float), and `description` from a given URL using a two-phase hybrid approach: structured CSS selectors first, LangChain LLM fallback second.
+The system SHALL attempt to extract product `name`, `price` (as a float), and `description` from a given URL via the `Scraper` class. Callers SHALL instantiate `Scraper()` and call `fetch_and_scrape(url)` on the instance. The two-phase hybrid strategy (CSS selectors first, LLM fallback second) is unchanged.
 
 #### Scenario: Successful extraction via CSS selectors
 - **WHEN** the page HTML contains recognizable structured fields (e.g., `[itemprop="price"]`, `h1`, `meta[name="description"]`)
