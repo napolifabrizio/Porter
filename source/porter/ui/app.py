@@ -5,11 +5,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from porter.checker import check_all_prices
-from porter.database import add_product, init_db, list_products
-from porter.scraper import fetch_and_scrape
+from porter.application.service import AppService
 
-init_db()
+svc = AppService()
 
 st.title("Porter — Price Tracker")
 
@@ -26,9 +24,8 @@ if st.button("Add Product"):
     else:
         with st.spinner("Fetching product data..."):
             try:
-                scraped = fetch_and_scrape(url)
-                add_product(scraped, url)
-                st.success(f"Added: **{scraped.name}** — R$ {scraped.price:.2f}")
+                product = svc.track(url)
+                st.success(f"Added: **{product.name}** — R$ {product.current_price:.2f}")
             except ValueError as e:
                 st.warning(str(e))
             except Exception as e:
@@ -38,7 +35,7 @@ st.divider()
 
 # ── Product list ───────────────────────────────────────────────────────────────
 
-products = list_products()
+products = svc.list_products()
 
 if not products:
     st.info("No products tracked yet. Paste a URL above to get started.")
@@ -61,19 +58,18 @@ else:
 
     if check_clicked:
         with st.spinner("Checking prices..."):
-            results = check_all_prices(products)
+            results = svc.check_all_prices()
             check_results = {r.product.id: r for r in results}
         # Reload products to show updated prices
-        products = list_products()
+        products = svc.list_products()
     elif check_sel_clicked:
         if n_selected == 0:
             st.warning("Select at least one product.")
         else:
-            selected_products = [p for p in products if p.id in selected_ids]
             with st.spinner("Checking selected prices..."):
-                results = check_all_prices(selected_products)
+                results = svc.check_selected(list(selected_ids))
                 check_results = {r.product.id: r for r in results}
-            products = list_products()
+            products = svc.list_products()
 
     st.subheader("Your products")
 

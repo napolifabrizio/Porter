@@ -15,11 +15,18 @@ Personal watchlist app: paste a product URL, track its price, get notified when 
 
 ```
 source/porter/
-  app.py        # Streamlit entry point
-  scraper.py    # fetch_and_scrape: BS4 first, LLM fallback
-  checker.py    # check_all_prices: re-scrapes, updates DB, returns CheckResult list
-  database.py   # SQLite helpers: init_db, add_product, list_products, update_price
-  models.py     # ScrapedData, Product (Pydantic)
+  models.py              # ScrapedData, Product (Pydantic) — shared across all layers
+  domain/
+    price_rules.py       # DROP_THRESHOLD, evaluate_price_drop() — pure business logic
+  application/
+    ports.py             # ProductScraper + ProductRepository Protocols
+    checker.py           # PriceChecker: orchestrates via ports, returns CheckResult list
+    service.py           # AppService: facade for the UI layer
+  infrastructure/
+    database.py          # Database: SQLite implementation of ProductRepository
+    scraper.py           # Scraper: HTTP+BS4+LLM implementation of ProductScraper
+  ui/
+    app.py               # Streamlit entry point
 
 openspec/
   specs/        # Capability specs: price-checking, product-scraping, product-storage, tracker-ui
@@ -37,7 +44,7 @@ poetry install
 export OPENAI_API_KEY=sk-...
 
 # Run
-poetry run streamlit run source/porter/app.py
+poetry run streamlit run source/porter/ui/app.py
 ```
 
 The SQLite database (`porter.db`) is created automatically in the working directory on first run.

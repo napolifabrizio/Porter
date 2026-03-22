@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Scraper extracts name, price, and description from any URL
 The system SHALL attempt to extract product `name`, `price` (as a float), and `description` from a given URL via the `Scraper` class located at `porter.infrastructure.scraper`. The `Scraper` class SHALL satisfy the `ProductScraper` protocol defined in `porter.application.ports`. The two-phase hybrid strategy (CSS selectors first, LLM fallback second) and all behavioral requirements are unchanged.
@@ -15,31 +15,7 @@ The system SHALL attempt to extract product `name`, `price` (as a float), and `d
 - **WHEN** neither CSS selectors nor the LLM can extract a valid price
 - **THEN** the scraper raises a descriptive error that the UI can display to the user
 
-### Requirement: Price strings are normalized to float
-The system SHALL convert price strings in any common format (R$, $, €, with `.` or `,` as thousands/decimal separators) into a Python `float`.
-
-#### Scenario: Brazilian format normalized
-- **WHEN** the price string is `"R$ 1.299,99"`
-- **THEN** the normalized float is `1299.99`
-
-#### Scenario: US format normalized
-- **WHEN** the price string is `"$12.99"`
-- **THEN** the normalized float is `12.99`
-
-#### Scenario: Invalid price string raises error
-- **WHEN** the extracted price string cannot be parsed into a number
-- **THEN** the scraper raises a descriptive error
-
-### Requirement: HTTP requests use browser-like headers
-The system SHALL send HTTP requests with a realistic `User-Agent` and `Accept` header to reduce the likelihood of being blocked by anti-bot measures.
-
-#### Scenario: Request includes User-Agent
-- **WHEN** the scraper fetches a URL
-- **THEN** the HTTP request includes a non-empty `User-Agent` header mimicking a real browser
-
-#### Scenario: Network error surfaces to user
-- **WHEN** the HTTP request fails (timeout, DNS error, non-200 status)
-- **THEN** the scraper raises a descriptive error that the UI can display
+## ADDED Requirements
 
 ### Requirement: A ProductScraper protocol defines the scraping contract
 The system SHALL define a `ProductScraper` Protocol in `porter.application.ports` with a single method `fetch_and_scrape(url: str) -> ScrapedData`. Any class that implements this method with the correct signature SHALL satisfy the protocol without explicit inheritance.
