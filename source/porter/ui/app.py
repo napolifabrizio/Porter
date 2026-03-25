@@ -54,12 +54,10 @@ else:
     with col_check_sel:
         check_sel_clicked = st.button(f"Check Selected ({n_selected})")
 
-    check_results: dict[int, object] = {}
-
     if check_clicked:
         with st.spinner("Checking prices..."):
             results = svc.check_all_prices()
-            check_results = {r.product.id: r for r in results}
+            st.session_state["check_results"] = {r.product.id: r for r in results}
         # Reload products to show updated prices
         products = svc.list_products()
     elif check_sel_clicked:
@@ -68,7 +66,7 @@ else:
         else:
             with st.spinner("Checking selected prices..."):
                 results = svc.check_selected(list(selected_ids))
-                check_results = {r.product.id: r for r in results}
+                st.session_state["check_results"] = {r.product.id: r for r in results}
             products = svc.list_products()
 
     st.subheader("Your products")
@@ -78,8 +76,26 @@ else:
         if exp_key not in st.session_state:
             st.session_state[exp_key] = False
 
+        check_results = st.session_state.get("check_results", {})
+        result = check_results.get(product.id)
+        if result is None:
+            stripe_color = None
+        elif result.error:
+            stripe_color = "#f44336"
+        elif result.dropped:
+            stripe_color = "#00c853"
+        else:
+            stripe_color = "#2196F3"
+
         with st.container(border=True):
-            col_sel, col_toggle, col_status = st.columns([0.3, 3, 1.4])
+            if stripe_color:
+                st.markdown(
+                    f"<div style='height: 4px; background-color: {stripe_color}; "
+                    f"margin: -0.5rem -1rem 0.75rem -1rem; border-radius: 2px 2px 0 0'></div>",
+                    unsafe_allow_html=True,
+                )
+
+            col_sel, col_toggle, col_status, col_del = st.columns([0.3, 3, 1.4, 0.5])
 
             with col_sel:
                 st.checkbox("", key=f"sel_{product.id}", label_visibility="collapsed")
@@ -91,7 +107,6 @@ else:
                     st.rerun()
 
             with col_status:
-                result = check_results.get(product.id)
 
                 if result and result.error:
                     st.markdown(f":red[⚠ {result.error[:80]}]")
@@ -113,6 +128,11 @@ else:
                         f"<b>R&#36; {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
+
+            with col_del:
+                if st.button("🗑", key=f"del_{product.id}", help="Remove product"):
+                    svc.remove_product(product.id)
+                    st.rerun()
 
             if st.session_state[exp_key]:
                 st.divider()
