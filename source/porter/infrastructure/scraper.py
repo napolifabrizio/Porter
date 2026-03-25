@@ -54,10 +54,18 @@ class Scraper:
         for selector in [
             "[itemprop='price']",
             "meta[property='og:price:amount']",
+            "[class*='price_vista-']",   # Brazilian e-commerce: PIX/cash promotional price
+            "[class*='sale-price']",
+            "[class*='special-price']",
+            "[class*='promo-price']",
             "[class*='price']",
         ]:
             el = soup.select_one(selector)
             if el:
+                # Skip elements that represent original/crossed-out prices
+                classes = " ".join(el.get("class", [])).lower()
+                if any(skip in classes for skip in ("_from", "_old", "_original", "_before", "strikethrough")):
+                    continue
                 price_raw = el.get("content") or el.get_text(strip=True)
                 if price_raw:
                     break
@@ -106,8 +114,9 @@ class Scraper:
             (
                 "system",
                 "You are a product data extractor. Given raw text from a product page, "
-                "extract the product name, price (as a raw string including currency symbol), "
-                "and a short description. If a field is not found, omit it.",
+                "extract the product name, current selling price (as a raw string including currency symbol), "
+                "and a short description. If there is a promotional or sale price, use that instead of the original price. "
+                "If a field is not found, omit it.",
             ),
             ("human", "{page_text}"),
         ])
