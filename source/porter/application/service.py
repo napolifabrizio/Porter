@@ -33,6 +33,10 @@ class AppService:
         products = [p for p in products if p.id in ids]
         return self._checker.check_all_prices(products)
 
+    def remove_product(self, product_id: int) -> None:
+        self._db.remove_product(product_id)
+        self._populate_or_update_products(True)
+
     def _populate_or_update_products(self, update: bool = False) -> list[Product]:
         if self._products is None or update:
             self._products = self._db.list_products()

@@ -67,3 +67,7 @@ class Database:
                 "UPDATE products SET current_price = ?, last_checked = ? WHERE id = ?",
                 (new_price, now, product_id),
             )
+
+    def remove_product(self, product_id: int) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM products WHERE id = ?", (product_id,))
