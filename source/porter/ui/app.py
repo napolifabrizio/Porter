@@ -48,11 +48,13 @@ else:
     }
     n_selected = len(selected_ids)
 
-    col_check, col_check_sel, _ = st.columns([1, 1, 3])
-    with col_check:
-        check_clicked = st.button("Check All Prices", type="primary")
-    with col_check_sel:
-        check_sel_clicked = st.button(f"Check Selected ({n_selected})")
+    # ── Sidebar: fixed check buttons ───────────────────────────────────────────
+    with st.sidebar:
+        st.subheader("Actions")
+        check_clicked = st.button("Check All Prices", type="primary", use_container_width=True)
+        check_sel_clicked = st.button(
+            f"Check Selected ({n_selected})", use_container_width=True
+        )
 
     if check_clicked:
         with st.spinner("Checking prices..."):
