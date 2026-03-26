@@ -1,8 +1,16 @@
+from dataclasses import dataclass
+
 from porter.application.checker import CheckResult, PriceChecker
 from porter.infrastructure.database import Database
 from porter.infrastructure.fetcher import HttpFetcher
 from porter.infrastructure.scraper import Scraper
 from porter.models import Product
+
+
+@dataclass
+class TrackResult:
+    product: Product
+    scraped_by_llm: bool
 
 
 class AppService:
@@ -13,11 +21,11 @@ class AppService:
         self._products = None
         self._db.init_db()
 
-    def track(self, url: str) -> Product:
+    def track(self, url: str) -> TrackResult:
         scraped = self._scraper.fetch_and_scrape(url)
         product = self._db.add_product(scraped, url)
         self._populate_or_update_products(True)
-        return product
+        return TrackResult(product=product, scraped_by_llm=scraped.scraped_by_llm)
 
     def list_products(self) -> list[Product]:
         products = self._db.list_products()

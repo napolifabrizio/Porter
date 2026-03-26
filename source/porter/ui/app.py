@@ -24,7 +24,11 @@ if st.button("Add Product"):
     else:
         with st.spinner("Fetching product data..."):
             try:
-                product = svc.track(url)
+                track_result = svc.track(url)
+                product = track_result.product
+                if "llm_scraped" not in st.session_state:
+                    st.session_state["llm_scraped"] = {}
+                st.session_state["llm_scraped"][product.id] = track_result.scraped_by_llm
                 st.success(f"Added: **{product.name}** — R$ {product.current_price:.2f}")
             except ValueError as e:
                 st.warning(str(e))
@@ -60,6 +64,10 @@ else:
         with st.spinner("Checking prices..."):
             results = svc.check_all_prices()
             st.session_state["check_results"] = {r.product.id: r for r in results}
+            if "llm_scraped" not in st.session_state:
+                st.session_state["llm_scraped"] = {}
+            for r in results:
+                st.session_state["llm_scraped"][r.product.id] = r.scraped_by_llm
         # Reload products to show updated prices
         products = svc.list_products()
     elif check_sel_clicked:
@@ -69,6 +77,10 @@ else:
             with st.spinner("Checking selected prices..."):
                 results = svc.check_selected(list(selected_ids))
                 st.session_state["check_results"] = {r.product.id: r for r in results}
+                if "llm_scraped" not in st.session_state:
+                    st.session_state["llm_scraped"] = {}
+                for r in results:
+                    st.session_state["llm_scraped"][r.product.id] = r.scraped_by_llm
             products = svc.list_products()
 
     st.subheader("Your products")
@@ -97,7 +109,7 @@ else:
                     unsafe_allow_html=True,
                 )
 
-            col_sel, col_toggle, col_status, col_del = st.columns([0.3, 3, 1.4, 0.5])
+            col_sel, col_toggle, col_status, col_llm, col_del = st.columns([0.3, 3, 1.4, 0.4, 0.5])
 
             with col_sel:
                 st.checkbox("", key=f"sel_{product.id}", label_visibility="collapsed")
@@ -130,6 +142,10 @@ else:
                         f"<b>R&#36; {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
+
+            with col_llm:
+                if st.session_state.get("llm_scraped", {}).get(product.id, False):
+                    st.button("🤖", key=f"llm_{product.id}", help="This product was scraped via LLM fallback", disabled=True)
 
             with col_del:
                 if st.button("🗑", key=f"del_{product.id}", help="Remove product"):
