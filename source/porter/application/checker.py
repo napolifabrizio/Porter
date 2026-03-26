@@ -1,3 +1,4 @@
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 
 from porter.application.ports import ProductRepository, ProductScraper
@@ -18,28 +19,22 @@ class PriceChecker:
         self._scraper = scraper
         self._repo = repo
 
+    def _check_one(self, product: Product) -> CheckResult:
+        try:
+            scraped = self._scraper.fetch_and_scrape(product.url)
+            self._repo.update_price(product.id, scraped.price)
+            dropped, change_pct = evaluate_price_drop(product.initial_price, scraped.price)
+            return CheckResult(product=product, dropped=dropped, change_pct=change_pct, error=None)
+        except Exception as e:
+            return CheckResult(product=product, dropped=False, change_pct=0.0, error=str(e))
+
     def check_all_prices(self, products: list[Product]) -> list[CheckResult]:
-        results: list[CheckResult] = []
-
-        for product in products:
-            try:
-                scraped = self._scraper.fetch_and_scrape(product.url)
-                self._repo.update_price(product.id, scraped.price)
-
-                dropped, change_pct = evaluate_price_drop(product.initial_price, scraped.price)
-
-                results.append(CheckResult(
-                    product=product,
-                    dropped=dropped,
-                    change_pct=change_pct,
-                    error=None,
-                ))
-            except Exception as e:
-                results.append(CheckResult(
-                    product=product,
-                    dropped=False,
-                    change_pct=0.0,
-                    error=str(e),
-                ))
-
-        return results
+        with ThreadPoolExecutor(max_workers=min(10, len(products))) as pool:
+            futures: dict[Future[CheckResult], int] = {
+                pool.submit(self._check_one, product): i
+                for i, product in enumerate(products)
+            }
+            results: list[CheckResult | None] = [None] * len(products)
+            for future, index in futures.items():
+                results[index] = future.result()
+        return results  # type: ignore[return-value]
