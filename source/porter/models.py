@@ -5,6 +5,7 @@ class ScrapedData(BaseModel):
     name: str
     price: float
     description: str | None = None
+    scraped_by_llm: bool = False
 
 
 class Product(BaseModel):

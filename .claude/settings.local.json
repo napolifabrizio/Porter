@@ -6,7 +6,11 @@
       "Bash(streamlit run:*)",
       "Bash(poetry run:*)",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(openspec new:*)"
+      "Bash(openspec new:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
