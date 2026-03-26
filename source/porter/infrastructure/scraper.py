@@ -125,7 +125,7 @@ class Scraper:
         result: _LLMProduct = chain.invoke({"page_text": text})
 
         price = self._normalize_price(result.price_raw)
-        return ScrapedData(name=result.name, price=price, description=result.description)
+        return ScrapedData(name=result.name, price=price, description=result.description, scraped_by_llm=True)
 
     def fetch_and_scrape(self, url: str) -> ScrapedData:
         """Fetch URL and extract product data using hybrid strategy."""

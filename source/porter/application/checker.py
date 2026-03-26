@@ -12,6 +12,7 @@ class CheckResult:
     dropped: bool
     change_pct: float
     error: str | None
+    scraped_by_llm: bool = False
 
 
 class PriceChecker:
@@ -24,9 +25,9 @@ class PriceChecker:
             scraped = self._scraper.fetch_and_scrape(product.url)
             self._repo.update_price(product.id, scraped.price)
             dropped, change_pct = evaluate_price_drop(product.initial_price, scraped.price)
-            return CheckResult(product=product, dropped=dropped, change_pct=change_pct, error=None)
+            return CheckResult(product=product, dropped=dropped, change_pct=change_pct, error=None, scraped_by_llm=scraped.scraped_by_llm)
         except Exception as e:
-            return CheckResult(product=product, dropped=False, change_pct=0.0, error=str(e))
+            return CheckResult(product=product, dropped=False, change_pct=0.0, error=str(e), scraped_by_llm=False)
 
     def check_all_prices(self, products: list[Product]) -> list[CheckResult]:
         with ThreadPoolExecutor(max_workers=min(10, len(products))) as pool:
