@@ -16,13 +16,15 @@ class TrackResult:
 class AppService:
     def __init__(self):
         self._db = Database()
-        self._scraper = Scraper(fetcher=HttpFetcher())
-        self._checker = PriceChecker(self._scraper, self._db)
+        self._fetcher = HttpFetcher()
+        self._scraper = Scraper()
+        self._checker = PriceChecker(self._scraper, self._db, self._fetcher)
         self._products = None
         self._db.init_db()
 
     def track(self, url: str) -> TrackResult:
-        scraped = self._scraper.fetch_and_scrape(url)
+        html = self._fetcher.fetch(url)
+        scraped = self._scraper.scrape(html)
         product = self._db.add_product(scraped, url)
         self._populate_or_update_products(True)
         return TrackResult(product=product, scraped_by_llm=scraped.scraped_by_llm)

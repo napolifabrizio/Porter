@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Price check re-scrapes all tracked products
-The system SHALL re-scrape the current price for every product when a price check is triggered via `PriceChecker(scraper, repo).check_all_prices(products)`. `PriceChecker` SHALL receive a `ProductScraper` protocol and a `ProductRepository` protocol via its constructor — not the concrete `Scraper` and `Database` classes. All products SHALL be checked concurrently (using a thread pool), not sequentially. Results SHALL be returned in the same order as the input `products` list regardless of completion order.
+The system SHALL re-scrape the current price for every product when a price check is triggered via `PriceChecker(scraper, repo, fetcher).check_all_prices(products)`. `PriceChecker` SHALL receive a `ProductScraper` protocol, a `ProductRepository` protocol, and an `HtmlFetcher` protocol via its constructor — not concrete implementations. For each product, `PriceChecker` SHALL fetch the HTML via `fetcher.fetch(product.url)` and then parse it via `scraper.scrape(html)`. All products SHALL be checked concurrently (using a thread pool), not sequentially. Results SHALL be returned in the same order as the input `products` list regardless of completion order.
 
 #### Scenario: All products updated on check
 - **WHEN** the user triggers a price check and all products scrape successfully
@@ -18,6 +18,10 @@ The system SHALL re-scrape the current price for every product when a price chec
 #### Scenario: Results preserve input order
 - **WHEN** a price check completes for a list of products
 - **THEN** the returned results list matches the order of the input products list, regardless of which product finished scraping first
+
+#### Scenario: PriceChecker depends only on protocols
+- **WHEN** `PriceChecker` is constructed
+- **THEN** it accepts `scraper: ProductScraper`, `repo: ProductRepository`, and `fetcher: HtmlFetcher` — no concrete infrastructure classes
 
 ### Requirement: Price-drop rule is defined in the domain layer
 The drop threshold constant (`DROP_THRESHOLD = 0.05`) and the evaluation logic SHALL live in `porter.domain.price_rules` as a pure function with no external dependencies. `PriceChecker` SHALL delegate to this function instead of computing the drop inline.

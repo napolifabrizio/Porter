@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Scraper extracts name, price, and description from HTML
 The system SHALL attempt to extract product `name`, `price` (as a float), and `description` from a given HTML string via the `Scraper` class located at `porter.infrastructure.scraper`. The `Scraper` class SHALL satisfy the `ProductScraper` protocol defined in `porter.application.ports`. The `Scraper` SHALL NOT accept or hold a reference to any HTTP fetcher — it SHALL receive pre-fetched HTML as a string parameter. The two-phase hybrid strategy (CSS selectors first, LLM fallback second) and all behavioral requirements are unchanged.
@@ -15,21 +15,6 @@ The system SHALL attempt to extract product `name`, `price` (as a float), and `d
 - **WHEN** neither CSS selectors nor the LLM can extract a valid price
 - **THEN** the scraper raises a descriptive error that the UI can display to the user
 
-### Requirement: Price strings are normalized to float
-The system SHALL convert price strings in any common format (R$, $, €, with `.` or `,` as thousands/decimal separators) into a Python `float`.
-
-#### Scenario: Brazilian format normalized
-- **WHEN** the price string is `"R$ 1.299,99"`
-- **THEN** the normalized float is `1299.99`
-
-#### Scenario: US format normalized
-- **WHEN** the price string is `"$12.99"`
-- **THEN** the normalized float is `12.99`
-
-#### Scenario: Invalid price string raises error
-- **WHEN** the extracted price string cannot be parsed into a number
-- **THEN** the scraper raises a descriptive error
-
 ### Requirement: A ProductScraper protocol defines the scraping contract
 The system SHALL define a `ProductScraper` Protocol in `porter.application.ports` with a single method `scrape(html: str) -> ScrapedData`. Any class that implements this method with the correct signature SHALL satisfy the protocol without explicit inheritance.
 
@@ -40,3 +25,9 @@ The system SHALL define a `ProductScraper` Protocol in `porter.application.ports
 #### Scenario: Scraper can be tested with raw HTML
 - **WHEN** `Scraper().scrape(html)` is called with a valid HTML string
 - **THEN** it returns a `ScrapedData` result without making any HTTP request
+
+## REMOVED Requirements
+
+### Requirement: HTTP requests use browser-like headers
+**Reason**: HTTP fetching is no longer the responsibility of `Scraper`. This concern belongs exclusively to `html-fetching` / `HttpFetcher`.
+**Migration**: No migration needed — `HttpFetcher` already handles browser-like headers and this requirement is fully covered by the `html-fetching` spec.

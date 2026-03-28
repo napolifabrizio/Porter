@@ -1,3 +1,4 @@
+import json
 import re
 
 from bs4 import BeautifulSoup
@@ -5,7 +6,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
-from porter.application.ports import HtmlFetcher
 from porter.models import ScrapedData
 
 
@@ -16,9 +16,6 @@ class _LLMProduct(BaseModel):
 
 
 class Scraper:
-    def __init__(self, fetcher: HtmlFetcher):
-        self._fetcher = fetcher
-
     @staticmethod
     def _normalize_price(raw: str) -> float:
         """Normalize price strings like 'R$ 1.299,99', '$12.99', '€1,299.00' to float."""
@@ -45,6 +42,62 @@ class Scraper:
         except ValueError:
             raise ValueError(f"Could not parse price from: {raw!r}")
 
+    def _scrape_with_json_ld(self, html: str) -> ScrapedData | None:
+        """Try to extract product data from JSON-LD structured data (<script type='application/ld+json'>)."""
+        soup = BeautifulSoup(html, "html.parser")
+        for script in soup.find_all("script", type="application/ld+json"):
+            try:
+                data = json.loads(script.string or "")
+            except (json.JSONDecodeError, AttributeError):
+                continue
+
+            # Normalize to a flat list of items (handles @graph and bare arrays)
+            if isinstance(data, dict) and "@graph" in data:
+                items = data["@graph"]
+            elif isinstance(data, list):
+                items = data
+            else:
+                items = [data]
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                item_type = item.get("@type", "")
+                if isinstance(item_type, list):
+                    is_product = "Product" in item_type
+                else:
+                    is_product = item_type in (
+                        "Product",
+                        "http://schema.org/Product",
+                        "https://schema.org/Product",
+                    )
+                if not is_product:
+                    continue
+
+                name = item.get("name") or None
+                description = item.get("description") or None
+
+                # offers can be a single dict or a list
+                price_raw = None
+                offers = item.get("offers")
+                if isinstance(offers, list):
+                    offers = offers[0] if offers else None
+                if isinstance(offers, dict):
+                    raw = offers.get("price")
+                    price_raw = str(raw) if raw is not None else None
+
+                if not name or not price_raw:
+                    continue
+
+                try:
+                    price = self._normalize_price(price_raw)
+                except ValueError:
+                    continue
+
+                return ScrapedData(name=name, price=price, description=description)
+
+        return None
+
     def _scrape_with_bs4(self, html: str) -> ScrapedData | None:
         """Try to extract product data using common CSS selectors. Returns None if incomplete."""
         soup = BeautifulSoup(html, "html.parser")
@@ -62,13 +115,22 @@ class Scraper:
         ]:
             el = soup.select_one(selector)
             if el:
-                # Skip elements that represent original/crossed-out prices
-                classes = " ".join(el.get("class", [])).lower()
+                # Normalize hyphens → underscores so both "price-original" and "price_original" match
+                classes = " ".join(el.get("class", [])).lower().replace("-", "_")
                 if any(skip in classes for skip in ("_from", "_old", "_original", "_before", "strikethrough")):
                     continue
                 price_raw = el.get("content") or el.get_text(strip=True)
                 if price_raw:
                     break
+
+        # Fallback: data-* price attributes used by some storefronts
+        if not price_raw:
+            for attr in ("data-sale-price", "data-price", "data-product-price"):
+                el = soup.select_one(f"[{attr}]")
+                if el:
+                    price_raw = el.get(attr)
+                    if price_raw:
+                        break
 
         # --- name ---
         name: str | None = None
@@ -77,11 +139,18 @@ class Scraper:
             if el:
                 name = el.get("content") or el.get_text(strip=True)
                 if name:
+                    # Strip "Product Name | Site Name" — pipe is almost always a site-name separator
+                    if "|" in name:
+                        name = name.split("|")[0].strip()
                     break
 
         # --- description ---
         description: str | None = None
-        for selector in ["meta[name='description']", "[itemprop='description']"]:
+        for selector in [
+            "meta[property='og:description']",
+            "meta[name='description']",
+            "[itemprop='description']",
+        ]:
             el = soup.select_one(selector)
             if el:
                 description = el.get("content") or el.get_text(strip=True)
@@ -127,9 +196,11 @@ class Scraper:
         price = self._normalize_price(result.price_raw)
         return ScrapedData(name=result.name, price=price, description=result.description, scraped_by_llm=True)
 
-    def fetch_and_scrape(self, url: str) -> ScrapedData:
-        """Fetch URL and extract product data using hybrid strategy."""
-        html = self._fetcher.fetch(url)
+    def scrape(self, html: str) -> ScrapedData:
+        """Extract product data from HTML using hybrid strategy."""
+        result = self._scrape_with_json_ld(html)
+        if result is not None:
+            return result
 
         result = self._scrape_with_bs4(html)
         if result is not None:
