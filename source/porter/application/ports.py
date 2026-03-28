@@ -8,7 +8,7 @@ class HtmlFetcher(Protocol):
 
 
 class ProductScraper(Protocol):
-    def fetch_and_scrape(self, url: str) -> ScrapedData: ...
+    def scrape(self, html: str) -> ScrapedData: ...
 
 
 class ProductRepository(Protocol):

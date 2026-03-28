@@ -1,7 +1,7 @@
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 
-from porter.application.ports import ProductRepository, ProductScraper
+from porter.application.ports import HtmlFetcher, ProductRepository, ProductScraper
 from porter.domain.price_rules import evaluate_price_drop
 from porter.models import Product
 
@@ -16,13 +16,15 @@ class CheckResult:
 
 
 class PriceChecker:
-    def __init__(self, scraper: ProductScraper, repo: ProductRepository):
+    def __init__(self, scraper: ProductScraper, repo: ProductRepository, fetcher: HtmlFetcher):
         self._scraper = scraper
         self._repo = repo
+        self._fetcher = fetcher
 
     def _check_one(self, product: Product) -> CheckResult:
         try:
-            scraped = self._scraper.fetch_and_scrape(product.url)
+            html = self._fetcher.fetch(product.url)
+            scraped = self._scraper.scrape(html)
             self._repo.update_price(product.id, scraped.price)
             dropped, change_pct = evaluate_price_drop(product.initial_price, scraped.price)
             return CheckResult(product=product, dropped=dropped, change_pct=change_pct, error=None, scraped_by_llm=scraped.scraped_by_llm)
