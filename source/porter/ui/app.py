@@ -98,6 +98,8 @@ else:
             stripe_color = "#f44336"
         elif result.dropped:
             stripe_color = "#00c853"
+        elif result.change_pct < 0:
+            stripe_color = "#f44336"
         else:
             stripe_color = "#2196F3"
 
@@ -128,6 +130,13 @@ else:
                     pct = result.change_pct * 100
                     st.markdown(
                         f"<span style='color:green; font-size:1.3em'>↓ -{pct:.1f}%</span><br>"
+                        f"<b>R&#36; {product.current_price:.2f}</b>",
+                        unsafe_allow_html=True,
+                    )
+                elif result and result.change_pct < 0:
+                    pct = abs(result.change_pct) * 100
+                    st.markdown(
+                        f"<span style='color:red; font-size:1.3em'>↑ +{pct:.1f}%</span><br>"
                         f"<b>R&#36; {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
