@@ -1,67 +1,57 @@
-# Porter — Price Tracker
+# CLAUDE.md — Porter
 
-Personal watchlist app: paste a product URL, track its price, get notified when it drops ≥ 5%.
+## What it is
+Porter is a personal price watchlist app. The user pastes a product URL; Porter scrapes the price, stores it, and flags when it drops or rises ≥5% from the initial price.
 
 ## Stack
+- **UI**: Streamlit (`source/porter/ui/app.py`)
+- **Language**: Python 3.11.9, managed with Poetry
+- **Scraping**: httpx + curl-cffi (fetch) → BeautifulSoup4 (parse) → GPT-4o-mini via LangChain (LLM fallback, only when BS4 fails)
+- **Models**: Pydantic v2 (`models.py`)
+- **DB**: SQLite (`porter.db`, created on first run)
 
-- **Python 3.11.9** managed with **Poetry**
-- **Streamlit** — UI (`source/porter/app.py`)
-- **LangChain + gpt-4o-mini** — LLM fallback scraper
-- **httpx + BeautifulSoup4** — primary scraper
-- **SQLite** — local database (`porter.db`, created at runtime)
-- **Pydantic v2** — data models
-
-## Project Layout
-
+## Architecture — Clean / Ports & Adapters
 ```
 source/porter/
-  models.py              # ScrapedData, Product (Pydantic) — shared across all layers
-  domain/
-    price_rules.py       # DROP_THRESHOLD, evaluate_price_drop() — pure business logic
+  models.py              # ScrapedData, Product — shared DTOs
+  domain/price_rules.py  # Pure price-drop rule (no I/O)
   application/
-    ports.py             # ProductScraper + ProductRepository Protocols
-    checker.py           # PriceChecker: orchestrates via ports, returns CheckResult list
-    service.py           # AppService: facade for the UI layer
+    ports.py             # HtmlFetcher, ProductScraper, ProductRepository Protocols
+    checker.py           # PriceChecker orchestrator (parallel via ThreadPoolExecutor)
+    service.py           # AppService facade used by UI
   infrastructure/
-    database.py          # Database: SQLite implementation of ProductRepository
-    scraper.py           # Scraper: HTTP+BS4+LLM implementation of ProductScraper
-  ui/
-    app.py               # Streamlit entry point
-
-openspec/
-  specs/        # Capability specs: price-checking, product-scraping, product-storage, tracker-ui
-  changes/      # Active feature changes (OpenSpec workflow)
-  changes/archive/  # Completed changes
+    fetcher.py           # httpx / curl-cffi HTTP client
+    scraper.py           # BS4 + LLM hybrid scraper
+    database.py          # SQLite implementation
+  ui/app.py              # Streamlit entry point
 ```
 
-## Running the App
+Dependency direction: `ui → application → domain`. Infrastructure implements ports; domain has no imports from other layers.
 
+## Key invariants
+- `initial_price` is set once on insert and never updated — it's the permanent baseline.
+- Price drop threshold: `(initial_price − current_price) / initial_price ≥ 0.05`
+- No background polling — checks are always user-triggered.
+- LLM scraper is a fallback only; JsonLD and BS4 runs first to keep costs low.
+
+## Dev workflow
 ```bash
-# Install dependencies
-poetry install
-
-# Set your OpenAI key (required for LLM fallback scraper)
-export OPENAI_API_KEY=sk-...
-
-# Run
-poetry run streamlit run source/porter/ui/app.py
+poetry install                              # install deps
+cp .env.example .env                        # set OPENAI_API_KEY
+poetry run streamlit run source/porter/ui/app.py   # run app
 ```
 
-The SQLite database (`porter.db`) is created automatically in the working directory on first run.
+Use `/streamlit` to launch the app from Claude Code.
 
-## Key Design Decisions
+## Env
+- `OPENAI_API_KEY` — required for LLM fallback scraper
 
-- **Hybrid scraping**: BS4 with common CSS selectors runs first; LLM extraction is only used when BS4 fails. This keeps costs low and avoids unnecessary API calls.
-- **Price drop threshold**: `(initial_price − current_price) / initial_price ≥ 0.05` (5%). Defined in `checker.py:DROP_THRESHOLD`.
-- **`initial_price` is immutable**: Once a product is added, `initial_price` never changes — it's the baseline for all comparisons. Only `current_price` and `last_checked` are updated.
-- **Price normalization**: `scraper.normalize_price` handles R$, $, € and European/Brazilian comma-dot conventions.
-- **No background polling**: Price checks are manual — the user clicks "Check All Prices".
+## Docs
+The folder ./docs contains others documentations, you cant read all of them at once, you have to read just that documentation that you
+will need, you will read on-demand. Below you can see descriptions of each one, so, you will know when you will need to read each one.
 
-## OpenSpec Workflow
-
-New features are developed using the OpenSpec workflow:
-- Use `/openspec-propose` to propose a change (creates `openspec/changes/<slug>/`)
-- Use `/openspec-apply-change` to implement tasks from the change
-- Use `/openspec-archive-change` to finalize and archive a completed change
-
-Capability specs live in `openspec/specs/` and define the contract for each feature area.
+`architecture_rules.md` -> When you will implement something, you will read it to respect the code rules of this project.
+`application` -> When you will do some implementation, plan or research inside this folder.
+`infrastructure` -> When you will do some implementation, plan or research inside this folder.
+`domain` -> When you will do some implementation, plan or research inside this folder.
+`ui` -> When you will do some implementation, plan or research inside this folder.
