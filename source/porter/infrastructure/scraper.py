@@ -105,9 +105,12 @@ class Scraper:
         # --- price ---
         price_raw: str | None = None
         for selector in [
+            ".a-price .a-offscreen",             # Amazon: accessible span with full price e.g. "$459.99"
+            "#priceblock_ourprice",              # Amazon legacy
+            "#priceblock_dealprice",             # Amazon deal legacy
             "[itemprop='price']",
             "meta[property='og:price:amount']",
-            "[class*='price_vista-']",   # Brazilian e-commerce: PIX/cash promotional price
+            "[class*='price_vista-']",           # Brazilian e-commerce: PIX/cash promotional price
             "[class*='sale-price']",
             "[class*='special-price']",
             "[class*='promo-price']",
