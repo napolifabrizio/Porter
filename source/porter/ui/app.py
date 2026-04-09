@@ -9,13 +9,106 @@ from porter.application.service import AppService
 
 svc = AppService()
 
+# ── Load lists ─────────────────────────────────────────────────────────────────
+
+all_lists = svc.list_all_lists()
+list_map = {wl.id: wl.name for wl in all_lists}
+
+if "active_list_id" not in st.session_state:
+    st.session_state["active_list_id"] = 1
+
+active_list_id: int = st.session_state["active_list_id"]
+active_list_name: str = list_map.get(active_list_id, "Standard")
+
 st.title("Porter — Price Tracker")
+
+# ── Sidebar ────────────────────────────────────────────────────────────────────
+
+with st.sidebar:
+    # ── Your Lists ────────────────────────────────────────────────────────────
+    st.subheader("Your Lists")
+
+    for wl in all_lists:
+        col_btn, col_del = st.columns([4, 1])
+        with col_btn:
+            is_active = wl.id == active_list_id
+            label = f"**{wl.name}**" if is_active else wl.name
+            if st.button(label, key=f"list_btn_{wl.id}", use_container_width=True):
+                st.session_state["active_list_id"] = wl.id
+                st.rerun()
+        with col_del:
+            if wl.id != 1:
+                if st.button("🗑", key=f"del_list_{wl.id}", help=f"Delete '{wl.name}'"):
+                    st.session_state[f"confirm_del_list_{wl.id}"] = True
+
+        if st.session_state.get(f"confirm_del_list_{wl.id}", False):
+            st.warning(
+                f"Delete **{wl.name}**? Its products will move to Standard.",
+                icon="⚠️",
+            )
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("Confirm", key=f"confirm_yes_{wl.id}", type="primary"):
+                    svc.delete_list(wl.id)
+                    if st.session_state["active_list_id"] == wl.id:
+                        st.session_state["active_list_id"] = 1
+                    del st.session_state[f"confirm_del_list_{wl.id}"]
+                    st.rerun()
+            with c2:
+                if st.button("Cancel", key=f"confirm_no_{wl.id}"):
+                    del st.session_state[f"confirm_del_list_{wl.id}"]
+                    st.rerun()
+
+    st.divider()
+
+    # ── New List ──────────────────────────────────────────────────────────────
+    with st.expander("New List"):
+        new_list_name = st.text_input("List name", key="new_list_name_input")
+        if st.button("Create", key="create_list_btn"):
+            name = new_list_name.strip()
+            if not name:
+                st.warning("List name cannot be empty.")
+            else:
+                try:
+                    svc.create_list(name)
+                    st.rerun()
+                except ValueError as e:
+                    st.warning(str(e))
+
+    st.divider()
+
+    # ── Actions ───────────────────────────────────────────────────────────────
+    st.subheader("Actions")
+
+    products_for_sel = svc.list_products()
+    selected_ids = {
+        p.id
+        for p in products_for_sel
+        if st.session_state.get(f"sel_{p.id}", False)
+    }
+    n_selected = len(selected_ids)
+
+    check_clicked = st.button("Check All Prices", type="primary", use_container_width=True)
+    check_sel_clicked = st.button(
+        f"Check Selected ({n_selected})", use_container_width=True
+    )
 
 # ── Add product ────────────────────────────────────────────────────────────────
 
 st.subheader("Track a new product")
 
 url_input = st.text_input("Product URL", placeholder="https://...")
+list_options = {wl.name: wl.id for wl in all_lists}
+default_index = next(
+    (i for i, wl in enumerate(all_lists) if wl.id == active_list_id), 0
+)
+selected_list_name = st.selectbox(
+    "Add to list",
+    options=list(list_options.keys()),
+    index=default_index,
+    key="track_list_selector",
+)
+selected_list_id = list_options[selected_list_name]
 
 if st.button("Add Product"):
     url = url_input.strip()
@@ -24,7 +117,7 @@ if st.button("Add Product"):
     else:
         with st.spinner("Fetching product data..."):
             try:
-                track_result = svc.track(url)
+                track_result = svc.track(url, list_id=selected_list_id)
                 product = track_result.product
                 if "llm_scraped" not in st.session_state:
                     st.session_state["llm_scraped"] = {}
@@ -39,52 +132,35 @@ st.divider()
 
 # ── Product list ───────────────────────────────────────────────────────────────
 
-products = svc.list_products()
+products = svc.list_products(list_id=active_list_id)
 
-if not products:
-    st.info("No products tracked yet. Paste a URL above to get started.")
-else:
-    # Compute selection count from checkbox widget state (before rendering buttons)
-    selected_ids = {
-        p.id
-        for p in products
-        if st.session_state.get(f"sel_{p.id}", False)
-    }
-    n_selected = len(selected_ids)
-
-    # ── Sidebar: fixed check buttons ───────────────────────────────────────────
-    with st.sidebar:
-        st.subheader("Actions")
-        check_clicked = st.button("Check All Prices", type="primary", use_container_width=True)
-        check_sel_clicked = st.button(
-            f"Check Selected ({n_selected})", use_container_width=True
-        )
-
-    if check_clicked:
-        with st.spinner("Checking prices..."):
-            results = svc.check_all_prices()
+if check_clicked:
+    with st.spinner("Checking prices..."):
+        results = svc.check_all_prices()
+        st.session_state["check_results"] = {r.product.id: r for r in results}
+        if "llm_scraped" not in st.session_state:
+            st.session_state["llm_scraped"] = {}
+        for r in results:
+            st.session_state["llm_scraped"][r.product.id] = r.scraped_by_llm
+    products = svc.list_products(list_id=active_list_id)
+elif check_sel_clicked:
+    if n_selected == 0:
+        st.warning("Select at least one product.")
+    else:
+        with st.spinner("Checking selected prices..."):
+            results = svc.check_selected(list(selected_ids))
             st.session_state["check_results"] = {r.product.id: r for r in results}
             if "llm_scraped" not in st.session_state:
                 st.session_state["llm_scraped"] = {}
             for r in results:
                 st.session_state["llm_scraped"][r.product.id] = r.scraped_by_llm
-        # Reload products to show updated prices
-        products = svc.list_products()
-    elif check_sel_clicked:
-        if n_selected == 0:
-            st.warning("Select at least one product.")
-        else:
-            with st.spinner("Checking selected prices..."):
-                results = svc.check_selected(list(selected_ids))
-                st.session_state["check_results"] = {r.product.id: r for r in results}
-                if "llm_scraped" not in st.session_state:
-                    st.session_state["llm_scraped"] = {}
-                for r in results:
-                    st.session_state["llm_scraped"][r.product.id] = r.scraped_by_llm
-            products = svc.list_products()
+        products = svc.list_products(list_id=active_list_id)
 
-    st.subheader("Your products")
+st.subheader(f"{active_list_name}")
 
+if not products:
+    st.info(f"No products in {active_list_name}. Paste a URL above to get started.")
+else:
     for product in products:
         exp_key = f"expanded_{product.id}"
         if exp_key not in st.session_state:
@@ -123,7 +199,6 @@ else:
                     st.rerun()
 
             with col_status:
-
                 if result and result.error:
                     st.markdown(f":red[⚠ {result.error[:80]}]")
                 elif result and result.dropped:
@@ -172,6 +247,20 @@ else:
                     "<br>".join(f"<span style='color:#cccccc; font-size:0.85em'>{l}</span>" for l in lines),
                     unsafe_allow_html=True,
                 )
+
+            # ── Move to list ───────────────────────────────────────────────────
+            other_lists = [wl for wl in all_lists if wl.id != product.list_id]
+            if other_lists:
+                move_options = {wl.name: wl.id for wl in other_lists}
+                chosen = st.selectbox(
+                    "Move to",
+                    options=["— move to —"] + list(move_options.keys()),
+                    key=f"move_{product.id}",
+                    label_visibility="collapsed",
+                )
+                if chosen != "— move to —":
+                    svc.move_product(product.id, move_options[chosen])
+                    st.rerun()
 
 
 # ── API key warning ────────────────────────────────────────────────────────────
