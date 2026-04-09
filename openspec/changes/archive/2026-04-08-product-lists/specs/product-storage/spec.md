@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Products are persisted in SQLite
 The system SHALL store all tracked products in a local SQLite database via the `Database` class located at `porter.infrastructure.database`. The `Database` class SHALL satisfy both the `ProductRepository` and `WatchListRepository` protocols defined in `porter.application.ports`. All behavioral requirements (schema, fields, duplicate handling) are unchanged, with the addition of a `list_id` foreign key on each product and a new `lists` table.
@@ -26,13 +26,6 @@ Each product record SHALL store: `url` (unique), `name`, `description`, `initial
 - **WHEN** the user attempts to add a URL that is already in the database
 - **THEN** the system rejects the insert and surfaces an error message to the user without crashing
 
-### Requirement: Current price is updatable
-The system SHALL update `current_price` and `last_checked` for an existing product without changing `initial_price`.
-
-#### Scenario: Price updated on check
-- **WHEN** a price check is triggered and a new price is scraped for a product
-- **THEN** `current_price` and `last_checked` are updated; `initial_price` remains unchanged
-
 ### Requirement: Products can be listed with optional list filter
 The system SHALL return stored products ordered by insertion time (ascending). An optional `list_id` parameter SHALL filter the results to only products belonging to that list. When `list_id` is `None`, all products are returned.
 
@@ -48,16 +41,18 @@ The system SHALL return stored products ordered by insertion time (ascending). A
 - **WHEN** `list_products(list_id=X)` is called and list X has no products
 - **THEN** an empty list is returned without error
 
-### Requirement: A ProductRepository protocol defines the storage contract
-The system SHALL define a `ProductRepository` Protocol in `porter.application.ports` with the following methods: `init_db() -> None`, `add_product(scraped: ScrapedData, url: str, list_id: int | None = None) -> Product`, `list_products(list_id: int | None = None) -> list[Product]`, `update_price(product_id: int, new_price: float) -> None`, and `remove_product(product_id: int) -> None`. Any class implementing these methods SHALL satisfy the protocol without explicit inheritance.
-
-#### Scenario: Database satisfies protocol structurally
-- **WHEN** `porter.infrastructure.database.Database` is checked against `ProductRepository`
-- **THEN** it is recognized as a valid implementation without importing or inheriting from `ProductRepository`
-
 ### Requirement: A WatchListRepository protocol defines the list storage contract
 The system SHALL define a `WatchListRepository` Protocol in `porter.application.ports` with the following methods: `create_list(name: str) -> WatchList`, `list_all_lists() -> list[WatchList]`, `delete_list(list_id: int) -> None`, and `move_product_to_list(product_id: int, list_id: int) -> None`. The `Database` class SHALL satisfy this protocol structurally.
 
 #### Scenario: Database satisfies WatchListRepository structurally
 - **WHEN** `porter.infrastructure.database.Database` is checked against `WatchListRepository`
 - **THEN** it is recognized as a valid implementation without importing or inheriting from `WatchListRepository`
+
+## MODIFIED Requirements
+
+### Requirement: A ProductRepository protocol defines the storage contract
+The system SHALL define a `ProductRepository` Protocol in `porter.application.ports` with the following methods: `init_db() -> None`, `add_product(scraped: ScrapedData, url: str, list_id: int | None = None) -> Product`, `list_products(list_id: int | None = None) -> list[Product]`, `update_price(product_id: int, new_price: float) -> None`, and `remove_product(product_id: int) -> None`. Any class implementing these methods SHALL satisfy the protocol without explicit inheritance.
+
+#### Scenario: Database satisfies protocol structurally
+- **WHEN** `porter.infrastructure.database.Database` is checked against `ProductRepository`
+- **THEN** it is recognized as a valid implementation without importing or inheriting from `ProductRepository`
