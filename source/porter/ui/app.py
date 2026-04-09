@@ -136,7 +136,7 @@ products = svc.list_products(list_id=active_list_id)
 
 if check_clicked:
     with st.spinner("Checking prices..."):
-        results = svc.check_all_prices()
+        results = svc.check_all_prices(list_id=active_list_id)
         st.session_state["check_results"] = {r.product.id: r for r in results}
         if "llm_scraped" not in st.session_state:
             st.session_state["llm_scraped"] = {}

@@ -54,8 +54,8 @@ class AppService:
         self._products = products
         return products
 
-    def check_all_prices(self) -> list[CheckResult]:
-        products = self._populate_or_update_products()
+    def check_all_prices(self, list_id: int | None = None) -> list[CheckResult]:
+        products = self._db.list_products(list_id)
         return self._checker.check_all_prices(products)
 
     def check_selected(self, ids: list[int]) -> list[CheckResult]:
