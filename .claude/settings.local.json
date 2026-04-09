@@ -11,7 +11,10 @@
       "Bash(git pull:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(openspec list:*)"
+      "Bash(openspec list:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Read(//c/Users/napol/.claude/**)"
     ]
   }
 }
