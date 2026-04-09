@@ -6,6 +6,7 @@ class ScrapedData(BaseModel):
     price: float
     description: str | None = None
     scraped_by_llm: bool = False
+    currency: str = "R$"
 
 
 class WatchList(BaseModel):
@@ -22,3 +23,4 @@ class Product(BaseModel):
     current_price: float
     last_checked: str
     list_id: int = 1
+    currency: str = "R$"

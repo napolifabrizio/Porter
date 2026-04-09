@@ -15,7 +15,26 @@ class _LLMProduct(BaseModel):
     description: str | None = None
 
 
+_ISO_TO_SYMBOL: dict[str, str] = {
+    "BRL": "R$",
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "JPY": "¥",
+}
+
+
 class Scraper:
+    @staticmethod
+    def _extract_currency(raw: str) -> str:
+        """Extract a currency display symbol from a raw price string."""
+        if "R$" in raw:
+            return "R$"
+        for symbol in ("$", "€", "£", "¥"):
+            if symbol in raw:
+                return symbol
+        return "R$"
+
     @staticmethod
     def _normalize_price(raw: str) -> float:
         """Normalize price strings like 'R$ 1.299,99', '$12.99', '€1,299.00' to float."""
@@ -82,9 +101,13 @@ class Scraper:
                 offers = item.get("offers")
                 if isinstance(offers, list):
                     offers = offers[0] if offers else None
+                price_currency: str | None = None
                 if isinstance(offers, dict):
                     raw = offers.get("price")
                     price_raw = str(raw) if raw is not None else None
+                    iso_code = offers.get("priceCurrency")
+                    if iso_code:
+                        price_currency = _ISO_TO_SYMBOL.get(iso_code)
 
                 if not name or not price_raw:
                     continue
@@ -94,7 +117,10 @@ class Scraper:
                 except ValueError:
                     continue
 
-                return ScrapedData(name=name, price=price, description=description)
+                if price_currency is None:
+                    price_currency = self._extract_currency(price_raw)
+
+                return ScrapedData(name=name, price=price, description=description, currency=price_currency)
 
         return None
 
@@ -163,12 +189,14 @@ class Scraper:
         if not price_raw or not name:
             return None
 
+        currency = self._extract_currency(price_raw)
+
         try:
             price = self._normalize_price(price_raw)
         except ValueError:
             return None
 
-        return ScrapedData(name=name, price=price, description=description)
+        return ScrapedData(name=name, price=price, description=description, currency=currency)
 
     def _scrape_with_llm(self, html: str) -> ScrapedData:
         """Extract product data using LangChain LLM when BS4 fails."""
@@ -196,8 +224,9 @@ class Scraper:
         chain = prompt | structured_llm
         result: _LLMProduct = chain.invoke({"page_text": text})
 
+        currency = self._extract_currency(result.price_raw)
         price = self._normalize_price(result.price_raw)
-        return ScrapedData(name=result.name, price=price, description=result.description, scraped_by_llm=True)
+        return ScrapedData(name=result.name, price=price, description=result.description, scraped_by_llm=True, currency=currency)
 
     def scrape(self, html: str) -> ScrapedData:
         """Extract product data from HTML using hybrid strategy."""

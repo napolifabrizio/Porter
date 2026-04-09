@@ -35,7 +35,8 @@ class Database:
                     initial_price REAL NOT NULL,
                     current_price REAL NOT NULL,
                     last_checked  TEXT NOT NULL,
-                    list_id       INTEGER NOT NULL DEFAULT 1 REFERENCES lists(id)
+                    list_id       INTEGER NOT NULL DEFAULT 1 REFERENCES lists(id),
+                    currency      TEXT NOT NULL DEFAULT 'R$'
                 )
             """)
             # Migration: add list_id to existing databases that lack the column
@@ -49,6 +50,13 @@ class Database:
                 )
                 conn.execute(
                     "UPDATE products SET list_id = 1 WHERE list_id IS NULL"
+                )
+            if "currency" not in columns:
+                conn.execute(
+                    "ALTER TABLE products ADD COLUMN currency TEXT DEFAULT 'R$'"
+                )
+                conn.execute(
+                    "UPDATE products SET currency = 'R$' WHERE currency IS NULL"
                 )
 
     # ── WatchList methods ───────────────────────────────────────────────────────
@@ -98,10 +106,10 @@ class Database:
                 cur = conn.execute(
                     """
                     INSERT INTO products
-                        (url, name, description, initial_price, current_price, last_checked, list_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                        (url, name, description, initial_price, current_price, last_checked, list_id, currency)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (url, scraped.name, scraped.description, scraped.price, scraped.price, now, effective_list_id),
+                    (url, scraped.name, scraped.description, scraped.price, scraped.price, now, effective_list_id, scraped.currency),
                 )
                 product_id = cur.lastrowid
         except sqlite3.IntegrityError:
@@ -116,6 +124,7 @@ class Database:
             current_price=scraped.price,
             last_checked=now,
             list_id=effective_list_id,
+            currency=scraped.currency,
         )
 
     def list_products(self, list_id: int | None = None) -> list[Product]:

@@ -122,7 +122,7 @@ if st.button("Add Product"):
                 if "llm_scraped" not in st.session_state:
                     st.session_state["llm_scraped"] = {}
                 st.session_state["llm_scraped"][product.id] = track_result.scraped_by_llm
-                st.success(f"Added: **{product.name}** — R$ {product.current_price:.2f}")
+                st.success(f"Added: **{product.name}** — {product.currency} {product.current_price:.2f}")
             except ValueError as e:
                 st.warning(str(e))
             except Exception as e:
@@ -205,25 +205,25 @@ else:
                     pct = result.change_pct * 100
                     st.markdown(
                         f"<span style='color:green; font-size:1.3em'>↓ -{pct:.1f}%</span><br>"
-                        f"<b>R&#36; {product.current_price:.2f}</b>",
+                        f"<b>{product.currency} {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
                 elif result and result.change_pct < 0:
                     pct = abs(result.change_pct) * 100
                     st.markdown(
                         f"<span style='color:red; font-size:1.3em'>↑ +{pct:.1f}%</span><br>"
-                        f"<b>R&#36; {product.current_price:.2f}</b>",
+                        f"<b>{product.currency} {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
                 elif result:
                     st.markdown(
                         f"<span style='color:gray; font-size:1.3em'>=</span><br>"
-                        f"<b>R&#36; {product.current_price:.2f}</b>",
+                        f"<b>{product.currency} {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
                 else:
                     st.markdown(
-                        f"<b>R&#36; {product.current_price:.2f}</b>",
+                        f"<b>{product.currency} {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
 
@@ -242,7 +242,7 @@ else:
                 if product.description:
                     lines.append(product.description[:160])
                 lines.append(f"🔗 {product.url}")
-                lines.append(f"Initial: R$ {product.initial_price:.2f}")
+                lines.append(f"Initial: {product.currency} {product.initial_price:.2f}")
                 st.markdown(
                     "<br>".join(f"<span style='color:#cccccc; font-size:0.85em'>{l}</span>" for l in lines),
                     unsafe_allow_html=True,
