@@ -6,6 +6,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from porter.application.service import AppService
+from porter.infrastructure.database import Database
+from porter.infrastructure.auth import verify_password
+
+if not st.session_state.get("authenticated"):
+    st.title("Porter")
+    password_input = st.text_input("Password", type="password")
+    login_btn = st.button("Login")
+    if login_btn:
+        if not password_input:
+            st.warning("Enter a password.")
+        else:
+            db = Database()
+            db.init_db()
+            if verify_password(db, password_input):
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Wrong password.")
+    st.stop()
 
 svc = AppService()
 
