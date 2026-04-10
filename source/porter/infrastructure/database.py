@@ -58,6 +58,28 @@ class Database:
                 conn.execute(
                     "UPDATE products SET currency = 'R$' WHERE currency IS NULL"
                 )
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS app_config (
+                    key   TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                )
+            """)
+
+    # ── Config methods ──────────────────────────────────────────────────────────
+
+    def get_config(self, key: str) -> str | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT value FROM app_config WHERE key = ?", (key,)
+            ).fetchone()
+        return row["value"] if row else None
+
+    def set_config(self, key: str, value: str) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO app_config (key, value) VALUES (?, ?)",
+                (key, value),
+            )
 
     # ── WatchList methods ───────────────────────────────────────────────────────
 
