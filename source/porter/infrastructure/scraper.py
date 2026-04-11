@@ -234,8 +234,12 @@ class Scraper:
         if result is not None:
             return result
 
-        result = self._scrape_with_bs4(html)
-        if result is not None:
-            return result
+        # ! Disabling LLM Scraper for now. Active it only
+        # ! with more security against prompt injection.
 
-        return self._scrape_with_llm(html)
+        # result = self._scrape_with_bs4(html)
+        # if result is not None:
+        #     return result
+
+        # return self._scrape_with_llm(html)
+        return self._scrape_with_bs4(html)
