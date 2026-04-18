@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
@@ -81,3 +82,9 @@ class AppService:
         if self._products is None or update:
             self._products = self._db.list_products()
         return self._products
+
+    # ── Extras ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def valid_open_ai_api_key():
+        return os.environ.get("OPENAI_API_KEY", False)
