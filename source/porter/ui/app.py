@@ -1,13 +1,10 @@
 import os
 
 import streamlit as st
-from dotenv import load_dotenv
-
-load_dotenv()
 
 from porter.application.service import AppService
-from porter.infrastructure.database import Database
-from porter.infrastructure.auth import verify_password
+
+svc = AppService()
 
 if not st.session_state.get("authenticated"):
     st.title("Porter")
@@ -17,15 +14,12 @@ if not st.session_state.get("authenticated"):
         if not password_input:
             st.warning("Enter a password.")
         else:
-            db = Database()
-            if verify_password(db, password_input):
+            if svc.verify_password(password_input):
                 st.session_state["authenticated"] = True
                 st.rerun()
             else:
                 st.error("Wrong password.")
     st.stop()
-
-svc = AppService()
 
 # ── Load lists ─────────────────────────────────────────────────────────────────
 
