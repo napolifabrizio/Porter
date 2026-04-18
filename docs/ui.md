@@ -13,4 +13,4 @@ The `ui/` folder is the application's entry point and the only layer that intera
 
 ## Position in the architecture
 
-`ui/` sits at the outermost layer of the Clean Architecture. It depends only on `application/service.py` (`AppService`) and never touches infrastructure or domain directly. No business logic lives here — it delegates everything to the application layer and only handles rendering and user input.
+`ui/` sits at the outermost layer of the Clean Architecture. It depends only on `application/service.py` (`AppService`) and never touches infrastructure, domain, database and any other backend module ordirectly, it can only see `AppService`. No business logic lives here — it delegates everything to the application layer and only handles rendering and user input.

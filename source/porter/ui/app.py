@@ -1,5 +1,3 @@
-import os
-
 import streamlit as st
 
 from porter.application.service import AppService
@@ -271,8 +269,8 @@ else:
 
 # ── API key warning ────────────────────────────────────────────────────────────
 
-if not os.environ.get("OPENAI_API_KEY"):
-    st.sidebar.warning(
-        "OPENAI_API_KEY not set. The LLM fallback scraper won't work. "
-        "Simple sites (with structured HTML) will still be scraped."
-    )
+# if not svc.valid_open_ai_api_key():
+#     st.sidebar.warning(
+#         "OPENAI_API_KEY not set. The LLM fallback scraper won't work. "
+#         "Simple sites (with structured HTML) will still be scraped."
+#     )
