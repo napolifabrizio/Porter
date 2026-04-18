@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from porter.application.checker import CheckResult, PriceChecker
+from porter.infrastructure.auth import verify_password as _verify_password
 from porter.infrastructure.database import Database
 from porter.infrastructure.fetcher import HttpFetcher
 from porter.infrastructure.scraper import Scraper
@@ -61,6 +66,12 @@ class AppService:
         products = self._populate_or_update_products()
         products = [p for p in products if p.id in ids]
         return self._checker.check_all_prices(products)
+
+    def verify_password(self, raw_password: str) -> bool:
+        stored_hash: str | None = self._db.get_config("password_hash")
+        if stored_hash is None:
+            return False
+        return _verify_password(stored_hash, raw_password)
 
     def remove_product(self, product_id: int) -> None:
         self._db.remove_product(product_id)

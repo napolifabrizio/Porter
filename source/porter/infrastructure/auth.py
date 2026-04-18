@@ -1,8 +1,5 @@
 import bcrypt
 
 
-def verify_password(db, raw_password) -> bool:
-    stored_hash = db.get_config("password_hash")
-    if stored_hash is None:
-        return False
+def verify_password(stored_hash: str, raw_password: str) -> bool:
     return bcrypt.checkpw(raw_password.encode(), stored_hash.encode())
