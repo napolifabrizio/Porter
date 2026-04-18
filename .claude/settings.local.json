@@ -14,7 +14,18 @@
       "Bash(openspec list:*)",
       "Bash(git push:*)",
       "Bash(gh pr:*)",
-      "Read(//c/Users/napol/.claude/**)"
+      "Read(//c/Users/napol/.claude/**)",
+      "Bash(git switch *)",
+      "Bash(sqlite3 C:/DEV/Projetos/Porter/porter.db \"SELECT * FROM products;\")",
+      "Bash(sqlite3 C:/DEV/Projetos/Porter/porter.db \"SELECT * FROM lists;\")",
+      "Bash(sqlite3 C:/DEV/Projetos/Porter/porter.db \"SELECT * FROM app_config;\")",
+      "Bash(sqlite3 C:/DEV/Projetos/Porter/porter.db \"SELECT * FROM sqlite_sequence;\")",
+      "Bash(sqlite3 *)",
+      "mcp__linear-server__list_teams",
+      "mcp__linear-server__save_project",
+      "mcp__linear-server__save_issue",
+      "mcp__linear-server__list_projects",
+      "mcp__linear-server__list_issues"
     ]
   }
 }
