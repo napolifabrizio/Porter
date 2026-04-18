@@ -17,6 +17,8 @@ dependencies = [
     "python-dotenv (>=1.2.2,<2.0.0)",
     "curl-cffi (>=0.14.0,<0.15.0)",
     "bcrypt (>=4.0)",
+    "sqlalchemy (>=2.0.49,<3.0.0)",
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
 ]
 
 

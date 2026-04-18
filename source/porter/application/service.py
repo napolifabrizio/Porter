@@ -20,7 +20,6 @@ class AppService:
         self._scraper = Scraper()
         self._checker = PriceChecker(self._scraper, self._db, self._fetcher)
         self._products = None
-        self._db.init_db()
 
     # ── List management ─────────────────────────────────────────────────────────
 

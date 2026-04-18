@@ -56,11 +56,15 @@ After a price check (all or selected), each product card that participated in th
 - **THEN** the card collapses back to showing only name and current price
 
 ### Requirement: Application is launchable via Streamlit
-The system SHALL be runnable with `streamlit run source/porter/app.py` from the project root.
+The system SHALL be runnable with `streamlit run source/porter/ui/app.py` from the project root. On launch, the app SHALL display a lock screen before any other content. The full app SHALL only be rendered after successful authentication.
 
 #### Scenario: App starts without errors
-- **WHEN** the command `streamlit run source/porter/app.py` is executed
+- **WHEN** the command `streamlit run source/porter/ui/app.py` is executed
 - **THEN** the Streamlit app opens in the browser without import errors or crashes
+
+#### Scenario: Lock screen is the first thing rendered
+- **WHEN** the app starts and the session is not authenticated
+- **THEN** only the lock screen is shown; no product data, sidebar, or other UI is rendered
 
 ### Requirement: User can select individual products and check only their prices
 The system SHALL display a checkbox on each product card that is visible in both collapsed and expanded states, and a "Check Selected (N)" button that, when clicked, re-scrapes and updates only the checked products.

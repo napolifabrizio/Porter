@@ -18,7 +18,6 @@ if not st.session_state.get("authenticated"):
             st.warning("Enter a password.")
         else:
             db = Database()
-            db.init_db()
             if verify_password(db, password_input):
                 st.session_state["authenticated"] = True
                 st.rerun()
