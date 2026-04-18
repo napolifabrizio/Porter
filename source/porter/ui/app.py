@@ -196,7 +196,7 @@ else:
         elif result.change_pct < 0:
             stripe_color = "#f44336"
         else:
-            stripe_color = "#2196F3"
+            stripe_color = None
 
         with st.container(border=True):
             if stripe_color:
@@ -231,12 +231,6 @@ else:
                     pct = abs(result.change_pct) * 100
                     st.markdown(
                         f"<span style='color:red; font-size:1.3em'>↑ +{pct:.1f}%</span><br>"
-                        f"<b>{product.currency} {product.current_price:.2f}</b>",
-                        unsafe_allow_html=True,
-                    )
-                elif result:
-                    st.markdown(
-                        f"<span style='color:gray; font-size:1.3em'>=</span><br>"
                         f"<b>{product.currency} {product.current_price:.2f}</b>",
                         unsafe_allow_html=True,
                     )
