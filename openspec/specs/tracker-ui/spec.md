@@ -55,16 +55,20 @@ After a price check (all or selected), each product card that participated in th
 - **WHEN** the user clicks the toggle control on an expanded card
 - **THEN** the card collapses back to showing only name and current price
 
-### Requirement: Application is launchable via Streamlit
-The system SHALL be runnable with `streamlit run source/porter/ui/app.py` from the project root. On launch, the app SHALL display a lock screen before any other content. The full app SHALL only be rendered after successful authentication.
+### Requirement: Application is launchable via React dev server
+The system SHALL be runnable with `npm run dev` inside `App/` from the project root. On launch, the app SHALL display a login screen before any other content. The full app SHALL only be rendered after successful JWT-based authentication.
 
 #### Scenario: App starts without errors
-- **WHEN** the command `streamlit run source/porter/ui/app.py` is executed
-- **THEN** the Streamlit app opens in the browser without import errors or crashes
+- **WHEN** the command `npm run dev` is executed inside `App/`
+- **THEN** the Vite dev server starts and the React app opens in the browser without console errors or build failures
 
 #### Scenario: Lock screen is the first thing rendered
-- **WHEN** the app starts and the session is not authenticated
-- **THEN** only the lock screen is shown; no product data, sidebar, or other UI is rendered
+- **WHEN** the app starts and sessionStorage has no JWT
+- **THEN** only the login page is shown; no product data, sidebar, or other UI is rendered
+
+#### Scenario: Successful login redirects to the product view
+- **WHEN** the user enters the correct password and submits the login form
+- **THEN** the JWT is stored in sessionStorage and the app navigates to `/list/1`
 
 ### Requirement: User can select individual products and check only their prices
 The system SHALL display a checkbox on each product card that is visible in both collapsed and expanded states, and a "Check Selected (N)" button that, when clicked, re-scrapes and updates only the checked products.
