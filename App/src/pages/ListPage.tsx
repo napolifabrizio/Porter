@@ -12,6 +12,7 @@ import {
   useDeleteProduct,
   useMoveProduct,
   useProducts,
+  useRenameProduct,
   useTrackProduct,
 } from '@/hooks/useProducts'
 import type { CheckResultResponse } from '@/types'
@@ -28,6 +29,7 @@ export function ListPage() {
   const checkSelectedMut = useCheckSelected(listId)
   const deleteProductMut = useDeleteProduct(listId)
   const moveProductMut = useMoveProduct(listId)
+  const renameProductMut = useRenameProduct(listId)
 
   const [checkResults, setCheckResults] = useState<Map<number, CheckResultResponse>>(new Map())
   const [llmScraped, setLlmScraped] = useState<Map<number, boolean>>(new Map())
@@ -138,6 +140,7 @@ export function ListPage() {
               onSelectChange={(checked) => toggleSelected(product.id, checked)}
               onDelete={(id) => deleteProductMut.mutate(id)}
               onMove={(productId, targetListId) => moveProductMut.mutate({ productId, targetListId })}
+              onRename={(productId, name) => renameProductMut.mutate({ productId, name })}
               allLists={allLists}
               llmScraped={llmScraped.get(product.id)}
             />

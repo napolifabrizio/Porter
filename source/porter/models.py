@@ -49,6 +49,10 @@ class MoveRequest(BaseModel):
     target_list_id: int
 
 
+class RenameProductRequest(BaseModel):
+    name: str
+
+
 class CheckSelectedRequest(BaseModel):
     ids: list[int]
 

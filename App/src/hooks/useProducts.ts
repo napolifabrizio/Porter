@@ -5,6 +5,7 @@ import {
   deleteProduct,
   getProducts,
   moveProduct,
+  renameProduct,
   trackProduct,
 } from '@/api/client'
 import type { CheckResultResponse, TrackResultResponse } from '@/types'
@@ -56,6 +57,15 @@ export function useMoveProduct(listId: number) {
   return useMutation({
     mutationFn: ({ productId, targetListId }: { productId: number; targetListId: number }) =>
       moveProduct(productId, { target_list_id: targetListId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: productsKey(listId) }),
+  })
+}
+
+export function useRenameProduct(listId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ productId, name }: { productId: number; name: string }) =>
+      renameProduct(productId, name),
     onSuccess: () => qc.invalidateQueries({ queryKey: productsKey(listId) }),
   })
 }

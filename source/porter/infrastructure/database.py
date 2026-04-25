@@ -157,6 +157,13 @@ class Database:
             )
             session.commit()
 
+    def update_name(self, product_id: int, name: str) -> None:
+        with self._Session() as session:
+            session.query(_ProductRow).filter(_ProductRow.id == product_id).update(
+                {_ProductRow.name: name}
+            )
+            session.commit()
+
     def remove_product(self, product_id: int) -> None:
         with self._Session() as session:
             session.query(_ProductRow).filter(_ProductRow.id == product_id).delete()

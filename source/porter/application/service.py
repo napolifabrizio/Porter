@@ -74,6 +74,12 @@ class AppService:
             return False
         return _verify_password(stored_hash, raw_password)
 
+    def rename_product(self, product_id: int, name: str) -> Product | None:
+        self._db.update_name(product_id, name)
+        self._populate_or_update_products(True)
+        products = self._db.list_products()
+        return next((p for p in products if p.id == product_id), None)
+
     def remove_product(self, product_id: int) -> None:
         self._db.remove_product(product_id)
         self._populate_or_update_products(True)

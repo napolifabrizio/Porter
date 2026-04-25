@@ -110,3 +110,7 @@ export function deleteProduct(productId: number): Promise<void> {
 export function moveProduct(productId: number, body: MoveRequest): Promise<void> {
   return request<void>(`/products/${productId}/list`, { method: 'PATCH', body: JSON.stringify(body) })
 }
+
+export function renameProduct(productId: number, name: string): Promise<Product> {
+  return request<Product>(`/products/${productId}`, { method: 'PATCH', body: JSON.stringify({ name }) })
+}

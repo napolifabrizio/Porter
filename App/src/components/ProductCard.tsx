@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { CheckResultResponse, Product, WatchList } from '@/types'
@@ -10,6 +10,7 @@ interface ProductCardProps {
   onSelectChange: (selected: boolean) => void
   onDelete: (id: number) => void
   onMove: (productId: number, targetListId: number) => void
+  onRename: (productId: number, name: string) => void
   allLists: WatchList[]
   llmScraped?: boolean
 }
@@ -59,12 +60,34 @@ export function ProductCard({
   onSelectChange,
   onDelete,
   onMove,
+  onRename,
   allLists,
   llmScraped,
 }: ProductCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
   const stripe = stripeColor(checkResult)
   const otherLists = allLists.filter((l) => l.id !== product.list_id)
+
+  function startEditing() {
+    setDraftName(product.name)
+    setIsEditing(true)
+    setTimeout(() => inputRef.current?.select(), 0)
+  }
+
+  function commitEdit() {
+    const trimmed = draftName.trim()
+    if (trimmed && trimmed !== product.name) {
+      onRename(product.id, trimmed)
+    }
+    setIsEditing(false)
+  }
+
+  function cancelEdit() {
+    setIsEditing(false)
+  }
 
   return (
     <div className={`relative flex flex-col rounded-lg border border-border bg-card overflow-hidden ${stripe ? 'border-l-4' : ''}`}
@@ -78,11 +101,32 @@ export function ProductCard({
         />
         <button
           onClick={() => setExpanded((e) => !e)}
-          className="flex-1 text-left text-sm font-medium hover:underline truncate"
+          className="flex-shrink-0 text-sm text-muted-foreground hover:text-foreground"
+          tabIndex={-1}
         >
-          <span className="mr-1">{expanded ? '▼' : '▶'}</span>
-          {product.name}
+          {expanded ? '▼' : '▶'}
         </button>
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); commitEdit() }
+              if (e.key === 'Escape') { e.preventDefault(); cancelEdit() }
+            }}
+            className="flex-1 text-sm font-medium bg-transparent border-b border-border outline-none truncate"
+          />
+        ) : (
+          <button
+            onClick={startEditing}
+            className="flex-1 text-left text-sm font-medium hover:underline truncate"
+            title="Click to rename"
+          >
+            {product.name}
+          </button>
+        )}
         <PriceStatus product={product} result={checkResult} />
         {!!llmScraped && (
           <span title="This product was scraped via LLM fallback" className="cursor-help text-base">

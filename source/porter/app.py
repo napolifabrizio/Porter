@@ -15,6 +15,7 @@ from porter.models import (
     LoginResponse,
     MoveRequest,
     Product,
+    RenameProductRequest,
     TrackRequest,
     TrackResultResponse,
     WatchList,
@@ -133,6 +134,16 @@ def check_selected(body: CheckSelectedRequest, _: None = Depends(_require_auth))
         )
         for r in results
     ]
+
+
+@app.patch("/products/{product_id}", response_model=Product)
+def rename_product(product_id: int, body: RenameProductRequest, _: None = Depends(_require_auth)) -> Product:
+    if not body.name.strip():
+        raise HTTPException(status_code=400, detail="Name cannot be blank")
+    product = _svc.rename_product(product_id, body.name.strip())
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
 
 
 @app.delete("/products/{product_id}", status_code=204)
