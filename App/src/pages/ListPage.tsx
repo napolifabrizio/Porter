@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/Sidebar'
 import { AddProductForm } from '@/components/AddProductForm'
 import { ProductCard } from '@/components/ProductCard'
@@ -95,12 +96,7 @@ export function ListPage() {
 
   return (
     <div className="flex h-full">
-      <Sidebar
-        onCheckAll={handleCheckAll}
-        onCheckSelected={handleCheckSelected}
-        selectedCount={selectedIds.size}
-        isChecking={isChecking}
-      />
+      <Sidebar />
 
       <main className="flex flex-1 flex-col overflow-hidden">
         <header className="border-b border-border px-6 py-4">
@@ -109,6 +105,21 @@ export function ListPage() {
 
         <div className="border-b border-border px-6 py-3">
           <AddProductForm currentListId={listId} onTrack={handleTrack} />
+        </div>
+
+        <div className="border-b border-border px-6 py-3 flex gap-2">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleCheckAll} disabled={isChecking}>
+            Check All Prices
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleCheckSelected}
+            disabled={isChecking || selectedIds.size === 0}
+          >
+            Check Selected ({selectedIds.size})
+          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">

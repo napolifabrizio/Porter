@@ -26,7 +26,7 @@ function PriceStatus({ product, result }: { product: Product; result?: CheckResu
   if (result.error) {
     return <span className="text-sm text-destructive">Error</span>
   }
-  const pct = result.change_pct
+  const pct = result.change_pct * 100
   if (result.dropped) {
     return (
       <span className="text-sm font-medium text-green-600">
@@ -34,10 +34,10 @@ function PriceStatus({ product, result }: { product: Product; result?: CheckResu
       </span>
     )
   }
-  if (pct > 0) {
+  if (result.rose) {
     return (
       <span className="text-sm font-medium text-red-600">
-        ↑ +{pct.toFixed(1)}% · {formatPrice(product, result)}
+        ↑ +{Math.abs(pct).toFixed(1)}% · {formatPrice(product, result)}
       </span>
     )
   }
@@ -48,6 +48,7 @@ function stripeColor(result?: CheckResultResponse) {
   if (!result) return null
   if (result.error) return 'bg-red-500'
   if (result.dropped) return 'bg-green-500'
+  if (result.rose) return 'bg-red-500'
   return null
 }
 

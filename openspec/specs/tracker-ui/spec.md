@@ -121,7 +121,7 @@ The system SHALL display a dedicated column between the price/status column and 
 - **THEN** the product name toggle button label contains only the expand arrow and product name, with no 🤖 character
 
 ### Requirement: Sidebar shows list navigation
-The system SHALL display the available watchlists in the sidebar above the "Actions" section. Clicking a list name SHALL filter the main product view to show only that list's products. The currently active list SHALL be visually indicated.
+The system SHALL display the available watchlists in the sidebar. Clicking a list name SHALL filter the main product view to show only that list's products. The currently active list SHALL be visually indicated.
 
 #### Scenario: Lists visible in sidebar
 - **WHEN** the user opens the app
@@ -149,6 +149,21 @@ The system SHALL provide a control in the sidebar to create a new named list and
 #### Scenario: Standard list has no delete button
 - **WHEN** the sidebar is rendered
 - **THEN** the Standard list does not show a delete button
+
+### Requirement: Price check action bar is displayed above the product list
+The system SHALL display a price check action bar in the main content area, positioned below the URL input form and above the product list. The action bar SHALL contain both "Check All Prices" and "Check Selected (N)" buttons. The buttons SHALL be disabled while a check is in progress. "Check Selected" SHALL be disabled when no products are selected.
+
+#### Scenario: Action bar is visible in the main content area
+- **WHEN** the user navigates to any list page
+- **THEN** the "Check All Prices" and "Check Selected (N)" buttons appear between the URL input form and the product list
+
+#### Scenario: Both buttons disabled during a check
+- **WHEN** a price check is in progress
+- **THEN** both "Check All Prices" and "Check Selected" buttons are disabled
+
+#### Scenario: Check Selected disabled with no selection
+- **WHEN** no product checkboxes are checked
+- **THEN** the "Check Selected (N)" button is disabled
 
 ### Requirement: Product cards show a move-to-list control
 Each product card SHALL include a control (e.g. selectbox) that allows the user to move the product to a different list. Selecting a new list SHALL immediately update the product's assignment and refresh the view.

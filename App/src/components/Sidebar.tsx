@@ -5,14 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCreateList, useDeleteList, useLists } from '@/hooks/useLists'
 
-interface SidebarProps {
-  onCheckAll: () => void
-  onCheckSelected: () => void
-  selectedCount: number
-  isChecking: boolean
-}
-
-export function Sidebar({ onCheckAll, onCheckSelected, selectedCount, isChecking }: SidebarProps) {
+export function Sidebar() {
   const navigate = useNavigate()
   const params = useParams({ strict: false })
   const activeId = Number((params as Record<string, string>).listId ?? 0)
@@ -109,28 +102,6 @@ export function Sidebar({ onCheckAll, onCheckSelected, selectedCount, isChecking
             + New List
           </button>
         )}
-      </div>
-
-      {/* Actions */}
-      <div className="p-2 border-t border-border space-y-1">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full text-xs"
-          onClick={onCheckAll}
-          disabled={isChecking}
-        >
-          Check All Prices
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full text-xs"
-          onClick={onCheckSelected}
-          disabled={isChecking || selectedCount === 0}
-        >
-          Check Selected ({selectedCount})
-        </Button>
       </div>
 
       {/* Delete confirmation dialog */}

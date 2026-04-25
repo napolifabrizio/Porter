@@ -61,6 +61,7 @@ class TrackResultResponse(BaseModel):
 class CheckResultResponse(BaseModel):
     product: Product
     dropped: bool
+    rose: bool
     change_pct: float
     error: str | None
     scraped_by_llm: bool

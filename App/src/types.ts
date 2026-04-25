@@ -48,6 +48,7 @@ export interface TrackResultResponse {
 export interface CheckResultResponse {
   product: Product
   dropped: boolean
+  rose: boolean
   change_pct: number
   error: string | null
   scraped_by_llm: boolean

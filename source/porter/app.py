@@ -110,6 +110,7 @@ def check_all_prices(list_id: int | None = None, _: None = Depends(_require_auth
         CheckResultResponse(
             product=r.product,
             dropped=r.dropped,
+            rose=r.rose,
             change_pct=r.change_pct,
             error=r.error,
             scraped_by_llm=r.scraped_by_llm,
@@ -125,6 +126,7 @@ def check_selected(body: CheckSelectedRequest, _: None = Depends(_require_auth))
         CheckResultResponse(
             product=r.product,
             dropped=r.dropped,
+            rose=r.rose,
             change_pct=r.change_pct,
             error=r.error,
             scraped_by_llm=r.scraped_by_llm,
