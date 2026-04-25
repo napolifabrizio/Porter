@@ -29,6 +29,8 @@ The system SHALL provide a "Check All Prices" button that re-scrapes every track
 ### Requirement: Product list shows price status with visual indicators
 The system SHALL display each tracked product as a collapsible card. The collapsed (default) state SHALL show only the product name and current price. The expanded state SHALL additionally show the product description (if present), the product URL, and the initial price. A toggle control in the card header SHALL switch between collapsed and expanded states. The price/status visual indicator (↓ green with percentage, = neutral, or red error) SHALL be visible in both states.
 
+The product name in the card header SHALL be inline-editable. Clicking the name text SHALL switch it into an edit input pre-filled with the current name. Pressing Enter or blurring the input SHALL save the change; pressing Escape SHALL cancel and revert to the original name. An empty name SHALL not be saved.
+
 After a price check (all or selected), each product card that participated in the check SHALL display a colored left stripe inside its border to indicate the check result. The stripe color SHALL be green for a price drop ≥ 5%, blue for a stable price, and red for a check error. Products not included in the last check SHALL show no stripe. Stripes SHALL persist across reruns (e.g., expanding a card, toggling a checkbox) until the next check run replaces them. Each new check SHALL replace all previous stripe state — only the most recent check's products are highlighted.
 
 #### Scenario: Dropped product shows green indicator
@@ -55,16 +57,40 @@ After a price check (all or selected), each product card that participated in th
 - **WHEN** the user clicks the toggle control on an expanded card
 - **THEN** the card collapses back to showing only name and current price
 
-### Requirement: Application is launchable via Streamlit
-The system SHALL be runnable with `streamlit run source/porter/ui/app.py` from the project root. On launch, the app SHALL display a lock screen before any other content. The full app SHALL only be rendered after successful authentication.
+#### Scenario: Clicking name enters edit mode
+- **WHEN** the user clicks the product name text in the card header
+- **THEN** the name is replaced by an editable input pre-filled with the current name
+
+#### Scenario: Enter saves the new name
+- **WHEN** the user types a new name in the edit input and presses Enter
+- **THEN** the name is saved via API and the card returns to display mode showing the new name
+
+#### Scenario: Blur saves the new name
+- **WHEN** the user types a new name in the edit input and clicks outside the input
+- **THEN** the name is saved via API and the card returns to display mode showing the new name
+
+#### Scenario: Escape cancels the edit
+- **WHEN** the user is editing the name and presses Escape
+- **THEN** the input is dismissed and the original name is restored without any API call
+
+#### Scenario: Empty name is not saved
+- **WHEN** the user clears the name input and presses Enter or blurs
+- **THEN** no API call is made and the original name is restored
+
+### Requirement: Application is launchable via React dev server
+The system SHALL be runnable with `npm run dev` inside `App/` from the project root. On launch, the app SHALL display a login screen before any other content. The full app SHALL only be rendered after successful JWT-based authentication.
 
 #### Scenario: App starts without errors
-- **WHEN** the command `streamlit run source/porter/ui/app.py` is executed
-- **THEN** the Streamlit app opens in the browser without import errors or crashes
+- **WHEN** the command `npm run dev` is executed inside `App/`
+- **THEN** the Vite dev server starts and the React app opens in the browser without console errors or build failures
 
 #### Scenario: Lock screen is the first thing rendered
-- **WHEN** the app starts and the session is not authenticated
-- **THEN** only the lock screen is shown; no product data, sidebar, or other UI is rendered
+- **WHEN** the app starts and sessionStorage has no JWT
+- **THEN** only the login page is shown; no product data, sidebar, or other UI is rendered
+
+#### Scenario: Successful login redirects to the product view
+- **WHEN** the user enters the correct password and submits the login form
+- **THEN** the JWT is stored in sessionStorage and the app navigates to `/list/1`
 
 ### Requirement: User can select individual products and check only their prices
 The system SHALL display a checkbox on each product card that is visible in both collapsed and expanded states, and a "Check Selected (N)" button that, when clicked, re-scrapes and updates only the checked products.
@@ -117,7 +143,7 @@ The system SHALL display a dedicated column between the price/status column and 
 - **THEN** the product name toggle button label contains only the expand arrow and product name, with no 🤖 character
 
 ### Requirement: Sidebar shows list navigation
-The system SHALL display the available watchlists in the sidebar above the "Actions" section. Clicking a list name SHALL filter the main product view to show only that list's products. The currently active list SHALL be visually indicated.
+The system SHALL display the available watchlists in the sidebar. Clicking a list name SHALL filter the main product view to show only that list's products. The currently active list SHALL be visually indicated.
 
 #### Scenario: Lists visible in sidebar
 - **WHEN** the user opens the app
@@ -145,6 +171,21 @@ The system SHALL provide a control in the sidebar to create a new named list and
 #### Scenario: Standard list has no delete button
 - **WHEN** the sidebar is rendered
 - **THEN** the Standard list does not show a delete button
+
+### Requirement: Price check action bar is displayed above the product list
+The system SHALL display a price check action bar in the main content area, positioned below the URL input form and above the product list. The action bar SHALL contain both "Check All Prices" and "Check Selected (N)" buttons. The buttons SHALL be disabled while a check is in progress. "Check Selected" SHALL be disabled when no products are selected.
+
+#### Scenario: Action bar is visible in the main content area
+- **WHEN** the user navigates to any list page
+- **THEN** the "Check All Prices" and "Check Selected (N)" buttons appear between the URL input form and the product list
+
+#### Scenario: Both buttons disabled during a check
+- **WHEN** a price check is in progress
+- **THEN** both "Check All Prices" and "Check Selected" buttons are disabled
+
+#### Scenario: Check Selected disabled with no selection
+- **WHEN** no product checkboxes are checked
+- **THEN** the "Check Selected (N)" button is disabled
 
 ### Requirement: Product cards show a move-to-list control
 Each product card SHALL include a control (e.g. selectbox) that allows the user to move the product to a different list. Selecting a new list SHALL immediately update the product's assignment and refresh the view.
