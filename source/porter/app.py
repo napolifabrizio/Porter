@@ -56,6 +56,12 @@ def _require_auth(credentials: HTTPAuthorizationCredentials = Depends(_bearer)) 
 
 # ── Auth ────────────────────────────────────────────────────────────────────────
 
+@app.get("/health")
+def health():
+    return "Hello World"
+
+# ── Auth ────────────────────────────────────────────────────────────────────────
+
 @app.post("/auth/login", response_model=LoginResponse)
 def login(body: LoginRequest) -> LoginResponse:
     if not _svc.verify_password(body.password):
