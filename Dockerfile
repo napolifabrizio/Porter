@@ -6,10 +6,10 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.in-project true \
-    && poetry install --no-root --without dev
+    && poetry install --no-root
 
 COPY source/ ./source/
-RUN poetry install --without dev
+RUN poetry install
 
 
 FROM python:3.11.9-slim
