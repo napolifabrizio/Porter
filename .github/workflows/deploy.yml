@@ -15,16 +15,6 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
-      - name: "🌍 Define Image Tag"
-        run: |
-          if [[ "${{ github.ref }}" != refs/tags/* ]]; then
-            echo "❌ ERRO: deploy can only be triggered from a tag!"
-            exit 1
-          fi
-
-          IMAGE_TAG=${GITHUB_REF#refs/tags/}
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-
       - name: "🔑 Configure AWS CLI"
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -53,13 +43,12 @@ jobs:
             --cache-from=type=local,src=/tmp/.buildx-cache \
             --cache-to=type=local,dest=/tmp/.buildx-cache \
             --load \
-            -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG \
+            -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }} \
             -f Dockerfile .
 
       - name: "☝🏾 Push image to ECR"
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG
-
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}
       - name: "📥 Last Task Definition"
         id: get-task
         run: |
@@ -70,7 +59,7 @@ jobs:
       - name: "✏️ Update Task Definition"
         id: update-task
         run: |
-          NEW_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG"
+          NEW_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}"
 
           jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE' cleaned-task-definition.json > task-definition-updated.json
 
