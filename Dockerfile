@@ -9,7 +9,7 @@ RUN poetry config virtualenvs.in-project true \
     && poetry install --no-root
 
 COPY source/ ./source/
-RUN poetry install
+RUN poetry install --no-root
 
 
 FROM python:3.11.9-slim
@@ -21,6 +21,7 @@ COPY --from=builder /app/source /app/source
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH="/app/source"
 
 EXPOSE 8000
 
