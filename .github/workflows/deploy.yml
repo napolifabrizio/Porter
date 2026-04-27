@@ -61,7 +61,14 @@ jobs:
         run: |
           NEW_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}"
 
-          jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE' cleaned-task-definition.json > task-definition-updated.json
+          jq --arg IMAGE "$NEW_IMAGE" '
+            .containerDefinitions[0].image = $IMAGE |
+            .containerDefinitions[0].environment = (
+              (.containerDefinitions[0].environment // [])
+              | map(select(.name | IN("DATABASE_URL","SECRET_KEY","OPENAI_API_KEY") | not))
+              | if any(.[]; .name == "PORTER_SECRETS_NAME") then . else . + [{"name":"PORTER_SECRETS_NAME","value":"porter-secrets"}] end
+            )
+          ' cleaned-task-definition.json > task-definition-updated.json
 
           NEW_REVISION=$(aws ecs register-task-definition --cli-input-json file://task-definition-updated.json --query "taskDefinition.revision" --output text)
 
