@@ -4,29 +4,39 @@
 Porter is a personal price watchlist app. The user pastes a product URL; Porter scrapes the price, stores it, and flags when it drops or rises ≥5% from the initial price.
 
 ## Stack
-- **UI**: Streamlit (`source/porter/ui/app.py`)
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS v4 + shadcn/ui + TanStack Router + React Query + Zustand (`App/`)
+- **Backend**: FastAPI (`source/porter/app.py`) — REST API with JWT auth
 - **Language**: Python 3.11.9, managed with Poetry
 - **Scraping**: httpx + curl-cffi (fetch) → BeautifulSoup4 (parse) → GPT-4o-mini via LangChain (LLM fallback, only when BS4 fails)
 - **Models**: Pydantic v2 (`models.py`)
-- **DB**: SQLite (`porter.db`, created on first run)
+- **DB**: PostgreSQL (via `infrastructure/database.py`)
 
 ## Architecture — Clean / Ports & Adapters
 ```
+App/                          # React frontend (served from S3 in prod)
+  src/
+    api/client.ts             # HTTP client (calls FastAPI)
+    components/               # UI components (shadcn/ui based)
+    hooks/                    # useLists, useProducts (React Query)
+    pages/                    # ListPage, LoginPage
+    store/auth.ts             # Zustand auth store
+
 source/porter/
-  models.py              # ScrapedData, Product — shared DTOs
-  domain/price_rules.py  # Pure price-drop rule (no I/O)
+  app.py                      # FastAPI entry point (REST API + JWT)
+  models.py                   # ScrapedData, Product, request/response DTOs
+  domain/price_rules.py       # Pure price-drop rule (no I/O)
   application/
-    ports.py             # HtmlFetcher, ProductScraper, ProductRepository Protocols
-    checker.py           # PriceChecker orchestrator (parallel via ThreadPoolExecutor)
-    service.py           # AppService facade used by UI
+    ports.py                  # HtmlFetcher, ProductScraper, ProductRepository Protocols
+    checker.py                # PriceChecker orchestrator (parallel via ThreadPoolExecutor)
+    service.py                # AppService facade used by API
   infrastructure/
-    fetcher.py           # httpx / curl-cffi HTTP client
-    scraper.py           # BS4 + LLM hybrid scraper
-    database.py          # SQLite implementation
-  ui/app.py              # Streamlit entry point
+    fetcher.py                # httpx / curl-cffi HTTP client
+    scraper.py                # BS4 + LLM hybrid scraper
+    database.py               # PostgreSQL implementation
+    auth.py                   # Password verification
 ```
 
-Dependency direction: `ui → application → domain`. Infrastructure implements ports; domain has no imports from other layers.
+Dependency direction: `api → application → domain`. Infrastructure implements ports; domain has no imports from other layers.
 
 ## Key invariants
 - `initial_price` is set once on insert and never updated — it's the permanent baseline.
@@ -36,15 +46,21 @@ Dependency direction: `ui → application → domain`. Infrastructure implements
 
 ## Dev workflow
 ```bash
-poetry install                              # install deps
-cp .env.example .env                        # set OPENAI_API_KEY
-poetry run streamlit run source/porter/ui/app.py   # run app
-```
+# Backend
+poetry install
+cp .env.example .env
+poetry run uvicorn porter.app:app --reload  # API on http://localhost:8000
 
-Use `/streamlit` to launch the app from Claude Code.
+# Frontend
+cd App
+npm install
+npm run dev                                 # React on http://localhost:5173
+```
 
 ## Env
 - `OPENAI_API_KEY` — required for LLM fallback scraper
+- `SECRET_KEY` — JWT signing key (required)
+- `CORS_ORIGINS` — comma-separated allowed origins (default: `http://localhost:5173`)
 
 ## Docs
 The folder ./docs contains others documentations, you cant read all of them at once, you have to read just that documentation that you

@@ -1,3 +1,7 @@
+from porter.infrastructure.config import load_secrets_into_env
+
+load_secrets_into_env()
+
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -23,7 +27,8 @@ from porter.models import (
 
 app = FastAPI(title="Porter API")
 
-_cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
+# _cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
+_cors_origins = "https://ofcporter.com"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
