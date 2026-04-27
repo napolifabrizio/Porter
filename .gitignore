@@ -3,6 +3,7 @@ porter.db
 
 # Environment
 .env
+.env.production
 
 # Python
 __pycache__/
